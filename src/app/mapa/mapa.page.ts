@@ -1086,48 +1086,65 @@ export class MapaPage implements OnDestroy {
   }
 
   private async startLocationWatch() {
-    try {
-      this.locationWatchId = await Geolocation.watchPosition({
-        enableHighAccuracy: true,
-        timeout: 10000,
-        maximumAge: 3000 // Acepta posiciones de hace 3 segundos (mucho más rápido)
-      }, (position, err) => {
-        if (err) {
+  try {
+    this.locationWatchId = await Geolocation.watchPosition({
+      enableHighAccuracy: true,
+      timeout: 20000,
+      maximumAge: 0
+    }, (position, err) => {
+
+      if (err) return;
+
+      if (position) {
+        const accuracy = position.coords.accuracy;
+
+        // --- FILTRO DINÁMICO ---
+        // Si la precisión es mayor a 15m, ignoramos (esto descarta antenas muy lejanas).
+        // Pero permitimos entre 5m y 15m SOLO para ver el punto en el mapa.
+        if (accuracy > 15) {
           return;
         }
-        if (position) {
-          // --- FILTRO DE PRECISIÓN ---
-          // Si la precisión horizontal es mayor a 50 metros, ignoramos esta lectura.
-          // Se aumentó de 20 a 50 para que detecte la ubicación más rápido al inicio.
-          if (position.coords.accuracy > 50) {
-            return;
-          }
 
-          const { latitude, longitude, altitude, accuracy, altitudeAccuracy, speed } = position.coords;
+        this.zone.run(() => {
+          const { latitude, longitude, altitude, altitudeAccuracy, speed } = position.coords;
 
           this.gpsData = {
-            lat: latitude ? parseFloat(latitude.toFixed(4)) : 0,
-            lng: longitude ? parseFloat(longitude.toFixed(4)) : 0,
-            alt: altitude ? parseFloat(altitude.toFixed(4)) : 0,
+            lat: latitude ? parseFloat(latitude.toFixed(6)) : 0,
+            lng: longitude ? parseFloat(longitude.toFixed(6)) : 0,
+            alt: altitude ? parseFloat(altitude.toFixed(2)) : 0,
             vel: speed ? parseFloat(speed.toFixed(2)) : 0,
-            accH: accuracy ? parseFloat(accuracy.toFixed(4)) : 0,
+            accH: accuracy ? parseFloat(accuracy.toFixed(2)) : 0,
             accV: altitudeAccuracy ? parseFloat(altitudeAccuracy.toFixed(2)) : 0,
           };
 
-          // Enviamos los datos actualizados al servicio compartido
+          // 1. Actualizamos el servicio para que el HTML muestre la precisión actual
           this.gpsDataService.updateGpsData(this.gpsData);
 
-          // Si los marcadores existen, actualizamos su posición
+          // 2. Movemos el marcador SIEMPRE (para que no parezca que "no funciona")
           if (this.userCircle && this.pulseCircle) {
             const newLatLng = L.latLng(latitude, longitude);
             this.userCircle.setLatLng(newLatLng);
             this.pulseCircle.setLatLng(newLatLng);
+
+            // 3. Solo centramos el mapa si la precisión es aceptable (< 10m)
+            if (accuracy <= 10 && this.map) {
+              this.map.panTo(newLatLng);
+            }
           }
-        }
-      });
-    } catch (error) {
-    }
+
+          // 4. BLOQUEO DE SEGURIDAD PARA DIBUJO
+          // Aquí está lo que buscas: si quieres usar este punto para un polígono
+          // en tu RegisterDataService, puedes validar que 'this.gpsData.accH' sea < 5
+          // antes de permitir el click en el botón de "Capturar".
+        });
+      }
+    });
+  } catch (error) {
+    console.error("Error GPS:", error);
   }
+}
+
+
 
   /**
    * Acción del botón: Muestra el indicador de carga y centra el mapa en el usuario.

@@ -68,3 +68,4 @@ export class GeometricosTabPage implements OnInit {
     this.userRole = await this.authService.getUserRole();
   }
 }
+

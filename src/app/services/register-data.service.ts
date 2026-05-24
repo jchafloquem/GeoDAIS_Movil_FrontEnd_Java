@@ -1383,7 +1383,12 @@ export class RegisterDataService {
 
     // Si no se pasa targetData, usamos el estado actual del formulario (UI)
     const currentData = targetData ? targetData : this._formData.getValue();
-    if (!ignoreExisting && currentData.UBIGEO_DEPARTAMENTO?.trim() && currentData.UBIGEO_PROVINCIA?.trim() && currentData.UBIGEO_DISTRITO?.trim()) {
+    // MEJORA: Solo omitimos el autocompletado si TODOS los campos de ubicación geográfica (incluyendo la Oficina Zonal) están presentes.
+    if (!ignoreExisting &&
+        currentData.UBIGEO_DEPARTAMENTO?.trim() &&
+        currentData.UBIGEO_PROVINCIA?.trim() &&
+        currentData.UBIGEO_DISTRITO?.trim() &&
+        currentData.UBIGEO_OFICINA_ZONAL?.trim()) {
         return null;
     }
 
@@ -1440,7 +1445,7 @@ export class RegisterDataService {
       geometryType: 'esriGeometryPoint',
       inSR: '4326',
       spatialRel: 'esriSpatialRelIntersects',
-      outFields: 'nombre',
+      outFields: '*', // MEJORA: Solicitamos todos los campos para evitar errores si el nombre del atributo cambia o tiene distinto casing (nombre/NOMBRE).
       returnGeometry: 'false',
       f: 'json'
     });

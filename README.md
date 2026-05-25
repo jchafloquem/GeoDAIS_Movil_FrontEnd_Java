@@ -21,3 +21,7 @@ git clone https://github.com/usuario/repositorio.git
 cd repositorio
 npm install
 ionic serve
+
+ionic build
+npx cap sync android
+npx cap open android

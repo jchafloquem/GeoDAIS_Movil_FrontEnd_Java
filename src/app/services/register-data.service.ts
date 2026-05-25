@@ -13,6 +13,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
+import { GpsDataService } from './gps-data.service';
 
 // Reutilizamos la interfaz de propiedades
 export interface ValidationResult {
@@ -110,6 +111,7 @@ const USER_PROFILE_KEY = 'userProfile';
 export class RegisterDataService {
 
   private isOnline = true;
+  private lastGpsAlt: number | null = null;
 
   // --- Estado Reactivo con BehaviorSubjects ---
   private readonly _geojson = new BehaviorSubject<GeoJSONFeature | null>(null);
@@ -164,9 +166,14 @@ export class RegisterDataService {
     private alertController: AlertController,
     private loadingController: LoadingController,
     private zone: NgZone,
-    private apiService: ApiService
+    private apiService: ApiService,
+    private gpsDataService: GpsDataService
   ) {
     this.initializeNetworkListener();
+    // Suscribirse al GPS para tener una altitud de respaldo si la geometría no la trae
+    this.gpsDataService.currentGpsData.subscribe(data => {
+      this.lastGpsAlt = data.alt;
+    });
   }
 
   // --- Métodos de Inicialización y Carga ---
@@ -1307,6 +1314,12 @@ export class RegisterDataService {
       data.geometryTypeLabel = 'Punto';
       const coords = geojson.geometry.coordinates;
       if (!coords || coords.length < 2) return;
+
+      // Fallback: Si el punto no tiene altitud, intentamos usar la del GPS actual
+      if (coords[2] === undefined && this.lastGpsAlt !== null) {
+        coords[2] = this.lastGpsAlt;
+      }
+
       data.centroide = `Lat: ${coords[1].toFixed(5)}, Lon: ${coords[0].toFixed(5)}`;
       data.altitud = (coords[2] !== undefined) ? `${coords[2].toFixed(2)} msnm` : 'No disponible';
       data.area = 'N/A (Punto)';
@@ -1315,7 +1328,14 @@ export class RegisterDataService {
       data.geometryTypeLabel = 'Línea';
       const coords = geometryType === 'LineString' ? geojson.geometry.coordinates : geojson.geometry.coordinates[0];
       if (!coords || coords.length < 2) return;
-      const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0]));
+
+      // MEJORA: Si faltan altitudes en los vértices, usamos la del GPS actual como respaldo
+      if (this.lastGpsAlt !== null) {
+        coords.forEach((c: any[]) => { if (c.length < 3) c[2] = this.lastGpsAlt; });
+      }
+
+      // Mapeamos incluyendo el componente de altitud (Z) si existe
+      const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0], c[2] || 0));
       let length = 0;
       for (let i = 0; i < latlngs.length - 1; i++) {
         length += latlngs[i].distanceTo(latlngs[i + 1]);
@@ -1340,7 +1360,14 @@ export class RegisterDataService {
       }
 
       if (!coords || coords.length < 3) return;
-      const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0]));
+
+      // MEJORA: Si faltan altitudes en los vértices, usamos la del GPS actual como respaldo
+      if (this.lastGpsAlt !== null) {
+        coords.forEach((c: any[]) => { if (c.length < 3) c[2] = this.lastGpsAlt; });
+      }
+
+      // Mapeamos incluyendo el componente de altitud (Z) si existe
+      const latlngs: L.LatLng[] = coords.map((c: any) => L.latLng(c[1], c[0], c[2] || 0));
 
       // CORRECCIÓN: Asegurarse de que el polígono esté cerrado para el cálculo del área, evitando resultados incorrectos.
       const closedLatlngs = [...latlngs];

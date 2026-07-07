@@ -77,9 +77,9 @@ export class LoginPage implements OnInit {
    * Si ha expirado, muestra una alerta y cierra la aplicación.
    */
   private async checkAppExpiration() {
-    // La aplicación funcionará hasta el 30 de junio de 2026, inclusive.
-    // Expirará a las 00:00 del 01 de julio de 2026.
-    const expirationDate = new Date('2026-06-30T00:00:00');
+    // La aplicación funcionará hasta el 30 de julio 2026, inclusive.
+    // Expirará a las 00:00 del 30 de julio de 2026.
+    const expirationDate = new Date('2026-08-30T23:59:00');
     const currentDate = new Date();
 
     if (currentDate >= expirationDate) {

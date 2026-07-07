@@ -18,7 +18,7 @@ export class GpsDataService {
     lat: null, lng: null, alt: null, vel: null, accH: null, accV: null,
   };
 
-  private gpsDataSource = new BehaviorSubject<GpsData>(this.initialGpsData);
+  private readonly gpsDataSource = new BehaviorSubject<GpsData>(this.initialGpsData);
   public currentGpsData = this.gpsDataSource.asObservable();
 
   updateGpsData(data: GpsData) {

@@ -52,7 +52,7 @@ export interface GeoJSONFeature {
 export class ApiService {
 
   // Considera mover este token a environment.ts para una mejor gestión y seguridad
-  private reniecToken: string = 'sk_2622.FO9PZhk5V73qfhjWluim7DJ4gOCjG8al';
+  private readonly reniecToken: string = 'sk_2622.FO9PZhk5V73qfhjWluim7DJ4gOCjG8al';
 
   constructor() { }
 
@@ -130,8 +130,8 @@ export class ApiService {
       const superficieStr = sanitizedPayload.SUPERFICIE_MIDAGRI;
 
       if (superficieStr && typeof superficieStr === 'string') {
-        const superficieNum = parseFloat(superficieStr);
-        sanitizedPayload.SUPERFICIE_MIDAGRI = isNaN(superficieNum) ? null : superficieNum;
+        const superficieNum = Number.parseFloat(superficieStr);
+        sanitizedPayload.SUPERFICIE_MIDAGRI = Number.isNaN(superficieNum) ? null : superficieNum;
       } else if (typeof sanitizedPayload.SUPERFICIE_MIDAGRI !== 'number') {
         sanitizedPayload.SUPERFICIE_MIDAGRI = null;
       }
@@ -177,10 +177,10 @@ export class ApiService {
     const superficieStr = sanitizedPayload.SUPERFICIE_MIDAGRI;
     if (superficieStr && typeof superficieStr === 'string') {
       console.log(`[ApiService] Sanitizando SUPERFICIE_MIDAGRI. Valor original: "${superficieStr}"`);
-      const superficieNum = parseFloat(superficieStr);
+      const superficieNum = Number.parseFloat(superficieStr);
       // Si la conversión resulta en un número válido, lo usamos.
       // Si no (ej. "NO REGISTRA" se convierte en NaN), enviamos null.
-      sanitizedPayload.SUPERFICIE_MIDAGRI = isNaN(superficieNum) ? null : superficieNum;
+      sanitizedPayload.SUPERFICIE_MIDAGRI = Number.isNaN(superficieNum) ? null : superficieNum;
       console.log(`[ApiService] SUPERFICIE_MIDAGRI sanitizado a: ${sanitizedPayload.SUPERFICIE_MIDAGRI}`);
     } else if (typeof sanitizedPayload.SUPERFICIE_MIDAGRI !== 'number') {
       console.log(`[ApiService] SUPERFICIE_MIDAGRI no es string ni número. Forzando a null. Valor original:`, sanitizedPayload.SUPERFICIE_MIDAGRI);

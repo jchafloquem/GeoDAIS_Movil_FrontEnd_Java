@@ -1085,11 +1085,43 @@ export class RegisterDataService {
       });
       if (!image.base64String) return;
 
-      // Aumentamos maximumAge a 5000ms para aceptar una ubicación reciente y no esperar una nueva triangulación
-      const position = await Geolocation.getCurrentPosition({ enableHighAccuracy: true, timeout: 15000, maximumAge: 5000 });
+      // --- INICIO: LÓGICA DE GEOLOCALIZACIÓN MEJORADA ---
+      let position;
+      try {
+        // Intento 1: Obtener GPS con alta precisión (ideal).
+        // Se reduce el timeout a 10s para una respuesta más rápida.
+        console.log('[RegisterDataService] takePicture: Intentando obtener GPS con alta precisión (timeout 10s)...');
+        position = await Geolocation.getCurrentPosition({
+          enableHighAccuracy: true,
+          timeout: 10000, // 10 segundos
+          maximumAge: 5000
+        });
+      } catch (error: any) {
+        // Si el primer intento falla por timeout, probamos con baja precisión.
+        if (error.message && error.message.toLowerCase().includes('timeout')) {
+          console.warn('[RegisterDataService] takePicture: Timeout en alta precisión. Reintentando con baja precisión (timeout 20s)...');
+          await this.showToast('No se pudo obtener GPS de alta precisión, reintentando con menor precisión...', 'warning', 'middle', 2500);
+          position = await Geolocation.getCurrentPosition({
+            enableHighAccuracy: false, // Permite usar WiFi/redes móviles
+            timeout: 20000, // Damos más tiempo en este intento
+            maximumAge: 60000 // Aceptamos una ubicación de hasta 1 minuto
+          });
+        } else {
+          // Si el error es otro (ej. permisos denegados), lo lanzamos para que sea manejado abajo.
+          throw error;
+        }
+      }
+      // --- FIN: LÓGICA DE GEOLOCALIZACIÓN MEJORADA ---
+
       const coords = position.coords;
       if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
         throw new Error('Coordenadas inválidas o nulas recibidas del GPS.');
+      }
+      // MEJORA: Validar la precisión horizontal (accH) para asegurar datos de calidad.
+      // Si la precisión es mayor a 15 metros, se considera inaceptable.
+      const horizontalAccuracy = coords.accuracy;
+      if (horizontalAccuracy > 15) {
+        throw new Error(`La precisión del GPS es muy baja (${horizontalAccuracy.toFixed(1)}m). Por favor, busque un lugar con mejor señal e intente de nuevo.`);
       }
 
       const date = new Date();
@@ -1099,7 +1131,7 @@ export class RegisterDataService {
       ];
 
       const imageWithOverlayBase64 = await this.addTextOverlayToImage(`data:image/jpeg;base64,${image.base64String}`, textLines);
-      const timestamp = new Date().getTime();
+      const timestamp = Date.now();
       const fileName = `parcela_${productorDni}_${timestamp}.jpeg`;
 
       const savedFile = await Filesystem.writeFile({
@@ -1124,7 +1156,7 @@ export class RegisterDataService {
       const rawErrorMessage = error.message || JSON.stringify(error);
 
       let displayMessage = `Error: ${rawErrorMessage}`; // Mensaje por defecto
-      if (rawErrorMessage.toLowerCase().includes('could not obtain location in time')) {
+      if (rawErrorMessage.toLowerCase().includes('timeout')) {
         displayMessage = 'No se pudo obtener la ubicación GPS a tiempo. Intente en un lugar con mejor señal.';
       }
 

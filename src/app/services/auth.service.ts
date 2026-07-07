@@ -12,8 +12,8 @@ const LAST_EMAIL_KEY = 'lastEmail';
   providedIn: 'root'
 })
 export class AuthService {
-  private afApp: FirebaseApp = inject(FirebaseApp);
-  private auth: Auth = getAuth(this.afApp);
+  private readonly afApp: FirebaseApp = inject(FirebaseApp);
+  private readonly auth: Auth = getAuth(this.afApp);
 
   async login(email: string, password: string): Promise<UserCredential | { offlineSuccess: true }> {
     const status = await Network.getStatus();
@@ -27,6 +27,8 @@ export class AuthService {
         const lowerCaseEmail = email.toLowerCase();
         if (lowerCaseEmail === 'pirdais@devida.gob.pe') {
           role = 'polygon-only';
+        } else if (lowerCaseEmail === 'equipogis@devida.gob.pe') {
+          role = 'default'; // Rol de superusuario con acceso a todo
         } else if (lowerCaseEmail === 'cultivos@devida.gob.pe') {
           role = 'other-crops';
         } else if (lowerCaseEmail === 'acuavicola@devida.gob.pe') {

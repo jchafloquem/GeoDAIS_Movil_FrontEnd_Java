@@ -63,7 +63,9 @@ import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import { Network } from '@capacitor/network';
 import { Device } from '@capacitor/device';
 import { RegisterDataService } from 'src/app/services/register-data.service';
-import { GpsDataService } from 'src/app/services/gps-data.service';
+import { GpsDataService, GpsData } from 'src/app/services/gps-data.service';
+import { GpsAcquisitionService } from 'src/app/services/gps-acquisition.service';
+import { Subscription } from 'rxjs';
 import { ApiService } from 'src/app/services/api.service';
 import { AuthService } from 'src/app/services/auth.service';
 import { LegendDataService, LegendCounts } from 'src/app/services/legend-data.service';
@@ -151,6 +153,7 @@ export class MapaPage implements OnDestroy {
   private crosshairMarker: any | null = null;
   private watchId: string | null = null;
   private fixedPathDistance = 0;
+  private gpsSubscription: Subscription | null = null;
   private polygonVertices: any[] = [];
 
   public isLoading = false;
@@ -195,6 +198,7 @@ export class MapaPage implements OnDestroy {
     private zone: NgZone,
     private registerDataService: RegisterDataService,
     private gpsDataService: GpsDataService,
+    private gpsAcquisitionService: GpsAcquisitionService,
     private authService: AuthService, // Inyectamos el AuthService
     private apiService: ApiService, // Inyectamos el ApiService
     private loadingController: LoadingController,
@@ -207,11 +211,20 @@ export class MapaPage implements OnDestroy {
     // Obtenemos el rol del usuario cuando la página está a punto de entrar en la vista
     this.userRole = await this.authService.getUserRole();
   }
+
   ionViewDidEnter() {
     this.initializeNetworkListener();
+    this.gpsAcquisitionService.startGpsWatch();
+
+    // Nos suscribimos a los datos del GPS para actualizar el panel
+    this.gpsSubscription = this.gpsDataService.currentGpsData.subscribe((data: GpsData) => {
+      this.gpsData = data;
+    });
+
     // Muestra un spinner inicial durante 5 segundos por estética
     setTimeout(() => {
       this.showInitialSpinner = false;
+      this.updateUserLocationMarker(); // Intentamos actualizar el marcador con los datos iniciales
     }, 5000);
 
     if (!this.map) {
@@ -233,6 +246,12 @@ export class MapaPage implements OnDestroy {
 
   ngOnDestroy() {
     Network.removeAllListeners();
+    this.gpsAcquisitionService.stopGpsWatch();
+
+    if (this.gpsSubscription) {
+      this.gpsSubscription.unsubscribe();
+    }
+
     if (this.locationWatchId) {
       Geolocation.clearWatch({ id: this.locationWatchId });
     }
@@ -282,6 +301,10 @@ export class MapaPage implements OnDestroy {
       this.pulseCircle.remove();
       this.pulseCircle = null;
     }
+    // Detenemos el servicio de GPS y lo reiniciamos para forzar una nueva adquisición
+    this.gpsAcquisitionService.stopGpsWatch();
+    this.gpsDataService.updateGpsData({ lat: null, lng: null, alt: null, vel: null, accH: null, accV: null });
+    this.gpsAcquisitionService.startGpsWatch();
   }
 
   zoomIn() {
@@ -1197,7 +1220,72 @@ export class MapaPage implements OnDestroy {
       this.isLoading = false;
     }
   }
+
+  /**
+   * Crea o actualiza el marcador de la ubicación del usuario en el mapa.
+   * Esta función es llamada cada vez que se recibe una nueva coordenada del GPS.
+   */
+  private updateUserLocationMarker() {
+    if (!this.map || !this.gpsData || !this.gpsData.lat) {
+      return; // No hacer nada si no hay mapa o datos de GPS
+    }
+
+    const newLatLng = L.latLng(this.gpsData.lat, this.gpsData.lng);
+
+    // Si los marcadores ya existen, solo actualizamos su posición
+    if (this.userCircle && this.pulseCircle) {
+      this.userCircle.setLatLng(newLatLng);
+      this.pulseCircle.setLatLng(newLatLng);
+    } else {
+      // Si no existen, los creamos por primera vez
+      this.userCircle = L.circle(newLatLng, {
+        color: '#ffff',
+        fillColor: '#0D9BD7',
+        fillOpacity: 1,
+        radius: 5,
+        weight: 2,
+      }).addTo(this.map);
+
+      this.pulseCircle = L.circle(newLatLng, {
+        color: 'transparent',
+        fillColor: '#3880ff',
+        fillOpacity: 0.5,
+        radius: 10,
+        weight: 0,
+      }).addTo(this.map);
+
+      // Iniciamos la animación de pulso
+      if (this.pulseInterval) clearInterval(this.pulseInterval);
+      this.startPulseAnimation();
+    }
+  }
+
   private initMap(): void {
+    // Verificación crucial: si el mapa ya existe, no hacemos nada.
+    if (this.map) {
+      return;
+    }
+
+    // Suscripción para actualizar el marcador del usuario en el mapa
+    this.gpsDataService.currentGpsData.subscribe(data => {
+      if (data && data.lat && data.lng) {
+        this.gpsData = data; // Actualizamos la variable local para el panel
+        this.updateUserLocationMarker();
+      }
+    });
+
+    // Suscripción para centrar el mapa en la primera ubicación válida
+    const firstLocationSub = this.gpsDataService.currentGpsData.subscribe(data => {
+      if (data && data.lat && data.lng && this.map) {
+        // Centramos el mapa en la primera ubicación válida y nos desuscribimos
+        this.map.setView([data.lat, data.lng], 16);
+        if (firstLocationSub) {
+          firstLocationSub.unsubscribe();
+        }
+      }
+    });
+
+
     const map = L.map('map', {
       center: [-9.00, -70.0152],
       zoomControl: false,
@@ -1291,9 +1379,27 @@ export class MapaPage implements OnDestroy {
     this.map = map;
 
     // Iniciamos el seguimiento continuo de la ubicación del usuario.
-    this.startLocationWatch();
+    this.startLocationWatch(); // RESTAURADO: Se activa tu lógica original de GPS.
 
     // Cargamos los polígonos guardados en el dispositivo
     this.loadSavedGeometries();
+  }
+
+  /**
+   * Inicia la animación de pulso para el marcador de ubicación del usuario.
+   */
+  private startPulseAnimation() {
+    const maxRadius = 40;
+    let radius = 10;
+    this.pulseInterval = setInterval(() => {
+      if (!this.pulseCircle) {
+        clearInterval(this.pulseInterval);
+        return;
+      }
+      radius += 1.5;
+      if (radius >= maxRadius) radius = 10;
+      this.pulseCircle.setRadius(radius);
+      this.pulseCircle.setStyle({ fillOpacity: 0.5 * (1 - (radius / maxRadius)) });
+    }, 50);
   }
 }

@@ -1085,43 +1085,33 @@ export class RegisterDataService {
       });
       if (!image.base64String) return;
 
-      // --- INICIO: LÓGICA DE GEOLOCALIZACIÓN MEJORADA ---
+      // --- INICIO: LÓGICA DE GEOLOCALIZACIÓN ROBUSTA ---
       let position;
       try {
-        // Intento 1: Obtener GPS con alta precisión (ideal).
-        // Se reduce el timeout a 10s para una respuesta más rápida.
-        console.log('[RegisterDataService] takePicture: Intentando obtener GPS con alta precisión (timeout 10s)...');
+        // Con el GPS "caliente" gracias a GpsAcquisitionService, esta llamada debería ser muy rápida.
+        // Pedimos una ubicación reciente (máximo 10s de antigüedad) con un timeout corto.
+        console.log('[RegisterDataService] takePicture: Obteniendo ubicación GPS actual...');
         position = await Geolocation.getCurrentPosition({
           enableHighAccuracy: true,
-          timeout: 10000, // 10 segundos
-          maximumAge: 5000
+          timeout: 5000, // 5 segundos de timeout es suficiente
+          maximumAge: 10000 // Aceptamos una ubicación de hasta 10 segundos de antigüedad
         });
-      } catch (error: any) {
-        // Si el primer intento falla por timeout, probamos con baja precisión.
-        if (error.message && error.message.toLowerCase().includes('timeout')) {
-          console.warn('[RegisterDataService] takePicture: Timeout en alta precisión. Reintentando con baja precisión (timeout 20s)...');
-          await this.showToast('No se pudo obtener GPS de alta precisión, reintentando con menor precisión...', 'warning', 'middle', 2500);
-          position = await Geolocation.getCurrentPosition({
-            enableHighAccuracy: false, // Permite usar WiFi/redes móviles
-            timeout: 20000, // Damos más tiempo en este intento
-            maximumAge: 60000 // Aceptamos una ubicación de hasta 1 minuto
-          });
-        } else {
-          // Si el error es otro (ej. permisos denegados), lo lanzamos para que sea manejado abajo.
-          throw error;
-        }
-      }
-      // --- FIN: LÓGICA DE GEOLOCALIZACIÓN MEJORADA ---
 
+        // MEJORA: Validar la precisión horizontal (accH) para asegurar datos de calidad.
+        // Si la precisión es mayor a 15 metros, se considera inaceptable.
+        const horizontalAccuracy = position.coords.accuracy;
+        if (horizontalAccuracy > 15) {
+          throw new Error(`La precisión del GPS es muy baja (${horizontalAccuracy.toFixed(1)}m). Por favor, busque un lugar con mejor señal e intente de nuevo.`);
+        }
+
+      } catch (error: any) {
+        // Si aún así falla, lanzamos el error para que sea manejado por el bloque catch principal.
+        throw error;
+      }
+      // --- FIN: LÓGICA DE GEOLOCALIZACIÓN ROBUSTA ---
       const coords = position.coords;
       if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
         throw new Error('Coordenadas inválidas o nulas recibidas del GPS.');
-      }
-      // MEJORA: Validar la precisión horizontal (accH) para asegurar datos de calidad.
-      // Si la precisión es mayor a 15 metros, se considera inaceptable.
-      const horizontalAccuracy = coords.accuracy;
-      if (horizontalAccuracy > 15) {
-        throw new Error(`La precisión del GPS es muy baja (${horizontalAccuracy.toFixed(1)}m). Por favor, busque un lugar con mejor señal e intente de nuevo.`);
       }
 
       const date = new Date();
@@ -1377,7 +1367,7 @@ export class RegisterDataService {
       const center = L.polyline(latlngs).getBounds().getCenter();
       data.centroide = `Lat: ${center.lat.toFixed(5)}, Lon: ${center.lng.toFixed(5)}`;
       data.altitud = this.calculateAverageAltitude(coords);
-    // MEJORA: Ser explícito con los tipos de geometría para evitar errores con tipos no manejados.
+      // MEJORA: Ser explícito con los tipos de geometría para evitar errores con tipos no manejados.
     } else if (geometryType === 'Polygon' || geometryType === 'MultiPolygon') {
       data.geometryTypeLabel = 'Polígono';
 
@@ -1444,11 +1434,11 @@ export class RegisterDataService {
     const currentData = targetData ? targetData : this._formData.getValue();
     // MEJORA: Solo omitimos el autocompletado si TODOS los campos de ubicación geográfica (incluyendo la Oficina Zonal) están presentes.
     if (!ignoreExisting &&
-        currentData.UBIGEO_DEPARTAMENTO?.trim() &&
-        currentData.UBIGEO_PROVINCIA?.trim() &&
-        currentData.UBIGEO_DISTRITO?.trim() &&
-        currentData.UBIGEO_OFICINA_ZONAL?.trim()) {
-        return null;
+      currentData.UBIGEO_DEPARTAMENTO?.trim() &&
+      currentData.UBIGEO_PROVINCIA?.trim() &&
+      currentData.UBIGEO_DISTRITO?.trim() &&
+      currentData.UBIGEO_OFICINA_ZONAL?.trim()) {
+      return null;
     }
 
     let point: { x: number, y: number };

@@ -207,6 +207,21 @@ export class MapaPage implements OnDestroy {
     addIcons({personAddOutline,listOutline,cloudUploadOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,mailOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
   }
 
+  /**
+   * Devuelve una clase CSS basada en la precisión actual del GPS para aplicar un código de colores.
+   * @returns 'gps-good', 'gps-medium', o 'gps-bad'.
+   */
+  public getGpsAccuracyClass(): string {
+    const accH = this.gpsData.accH;
+    if (accH === null || accH > 10) {
+      return 'gps-bad'; // Mala precisión (rojo)
+    }
+    if (accH > 5) {
+      return 'gps-medium'; // Precisión media (ámbar)
+    }
+    return 'gps-good'; // Buena precisión (verde)
+  }
+
   async ionViewWillEnter() {
     // Obtenemos el rol del usuario cuando la página está a punto de entrar en la vista
     this.userRole = await this.authService.getUserRole();
@@ -288,23 +303,19 @@ export class MapaPage implements OnDestroy {
     });
   }
 
-  clearLocation() {
+  /**
+   * Elimina los marcadores de ubicación del usuario (punto azul y pulso) del mapa.
+   * No detiene el servicio de GPS, que sigue funcionando en segundo plano.
+   * Al presionar "Centrar" de nuevo, los marcadores reaparecerán instantáneamente.
+   */
+  resetUserLocation() {
     if (this.pulseInterval) {
       clearInterval(this.pulseInterval);
       this.pulseInterval = null;
     }
-    if (this.userCircle) {
-      this.userCircle.remove();
-      this.userCircle = null;
-    }
-    if (this.pulseCircle) {
-      this.pulseCircle.remove();
-      this.pulseCircle = null;
-    }
-    // Detenemos el servicio de GPS y lo reiniciamos para forzar una nueva adquisición
-    this.gpsAcquisitionService.stopGpsWatch();
-    this.gpsDataService.updateGpsData({ lat: null, lng: null, alt: null, vel: null, accH: null, accV: null });
-    this.gpsAcquisitionService.startGpsWatch();
+    if (this.userCircle) { this.userCircle.remove(); this.userCircle = null; }
+    if (this.pulseCircle) { this.pulseCircle.remove(); this.pulseCircle = null; }
+    this.registerDataService.showToast('Marcador de ubicación limpiado.', 'medium', 'top');
   }
 
   zoomIn() {
@@ -438,6 +449,42 @@ export class MapaPage implements OnDestroy {
     return tiles;
   }
 
+  /**
+   * Descarta el dibujo actual (polígono o línea) sin detener la captura de coordenadas GPS.
+   * Esto permite al usuario reiniciar un dibujo sin perder la precisión del GPS.
+   */
+  public discardCurrentDrawing() {
+    if (!this.isDrawingPolygon && !this.isDrawingLine) {
+      this.registerDataService.showToast('No hay dibujo en curso para descartar.', 'warning', 'top');
+      return;
+    }
+
+    // Resetear variables específicas del dibujo
+    this.polygonVertices = [];
+    this.fixedPathDistance = 0;
+
+    // Eliminar elementos visuales temporales del mapa
+    if (this.walkingPolyline) {
+      this.map.removeLayer(this.walkingPolyline);
+      this.walkingPolyline = null; // Establecer a null para que startDrawingByWalking lo re-cree
+    }
+    if (this.vertexMarkers) {
+      this.vertexMarkers.clearLayers();
+    }
+
+    // Resetear el contenido del tooltip de la mira
+    if (this.crosshairMarker) {
+      this.crosshairMarker.setTooltipContent('0.0 m');
+    }
+
+    // Asegurarse de que la mira (crosshair) permanezca visible si ya estaba en el mapa,
+    // lista para el nuevo dibujo.
+    if (this.crosshairMarker && !this.map.hasLayer(this.crosshairMarker)) {
+      this.crosshairMarker.addTo(this.map);
+    }
+    this.registerDataService.showToast('Dibujo actual descartado. Puede empezar uno nuevo.', 'success', 'top');
+  }
+
   toggleDrawingMode() {
     if (this.isDrawingLine) {
       this.registerDataService.showToast('Finalice el dibujo de la línea primero.', 'warning', 'top');
@@ -466,7 +513,16 @@ export class MapaPage implements OnDestroy {
   }
 
   addPolygonPoint() {
+    // --- CONTROL DE PRECISIÓN HORIZONTAL ---
+    // Solo permite añadir un punto si la precisión del GPS es de 10 metros o menos.
+    const currentAccuracy = this.gpsData.accH;
+    if (currentAccuracy === null || currentAccuracy > 10) {
+      this.registerDataService.showToast(`Precisión GPS muy baja (${currentAccuracy?.toFixed(1) || 'N/A'} m). Espere a que sea ≤ 10m.`, 'warning', 'middle');
+      return;
+    }
+
     if (!this.crosshairMarker) {
+      this.registerDataService.showToast('La mira de dibujo no está activa.', 'danger', 'top');
       return;
     }
 
@@ -540,7 +596,8 @@ export class MapaPage implements OnDestroy {
         const crosshairIcon = L.divIcon({
           className: 'crosshair-icon',
           html: '+',
-          iconSize: [30, 30]
+          iconSize: [30, 30],
+          iconAnchor: [15, 15] // Centrar el icono
         });
         this.crosshairMarker = L.marker(initialPoint, { icon: crosshairIcon, interactive: false }).addTo(this.map);
         this.crosshairMarker.bindTooltip('0.0 m', {
@@ -558,6 +615,7 @@ export class MapaPage implements OnDestroy {
       this.watchId = await Geolocation.watchPosition(watchOptions, (position, err) => {
         if (err || !position) {
           this.toggleDrawingMode(); // Detener si hay un error de GPS
+          this.registerDataService.showToast('Error de GPS al dibujar. Intente de nuevo.', 'danger', 'top');
           return;
         }
 
@@ -582,6 +640,7 @@ export class MapaPage implements OnDestroy {
       if (this.isDrawingPolygon) {
         this.toggleDrawingMode();
       }
+      this.registerDataService.showToast('No se pudo iniciar el dibujo. Verifique los permisos de GPS.', 'danger', 'top');
     } finally {
       this.isLoading = false;
     }
@@ -608,6 +667,12 @@ export class MapaPage implements OnDestroy {
       this.registerDataService.createDraftAndNavigate(polygon.toGeoJSON());
     } else {
       this.registerDataService.showToast('Dibujo cancelado: se necesitan al menos 3 puntos.', 'warning', 'top');
+      // Mejorar el mensaje si no se añadieron puntos o no fueron suficientes
+      if (this.polygonVertices.length > 0) {
+        this.registerDataService.showToast('Dibujo de polígono cancelado: se necesitan al menos 3 puntos.', 'warning', 'top');
+      } else {
+        this.registerDataService.showToast('Modo de dibujo de polígono finalizado.', 'medium', 'top');
+      }
     }
 
     // 3. Limpiar elementos temporales del mapa
@@ -644,6 +709,12 @@ export class MapaPage implements OnDestroy {
       this.registerDataService.createDraftAndNavigate(line.toGeoJSON());
     } else {
       this.registerDataService.showToast('Dibujo cancelado: se necesitan al menos 2 puntos para una línea.', 'warning', 'top');
+      // Mejorar el mensaje si no se añadieron puntos o no fueron suficientes
+      if (this.polygonVertices.length > 0) {
+        this.registerDataService.showToast('Dibujo de línea cancelado: se necesitan al menos 2 puntos.', 'warning', 'top');
+      } else {
+        this.registerDataService.showToast('Modo de dibujo de línea finalizado.', 'medium', 'top');
+      }
     }
 
     // 3. Limpiar elementos temporales del mapa
@@ -1112,36 +1183,24 @@ export class MapaPage implements OnDestroy {
   try {
     this.locationWatchId = await Geolocation.watchPosition({
       enableHighAccuracy: true,
-      timeout: 20000,
+      timeout: 10000, // Reducido para consistencia
       maximumAge: 0
     }, (position, err) => {
 
-      if (err) return;
+      if (err) {
+        console.error("Error en watchPosition:", err);
+        return;
+      }
 
       if (position) {
         const accuracy = position.coords.accuracy;
 
-        // --- FILTRO DINÁMICO ---
-        // Si la precisión es mayor a 15m, ignoramos (esto descarta antenas muy lejanas).
-        // Pero permitimos entre 5m y 15m SOLO para ver el punto en el mapa.
-        if (accuracy > 15) {
-          return;
-        }
-
         this.zone.run(() => {
           const { latitude, longitude, altitude, altitudeAccuracy, speed } = position.coords;
 
-          this.gpsData = {
-            lat: latitude ? parseFloat(latitude.toFixed(6)) : 0,
-            lng: longitude ? parseFloat(longitude.toFixed(6)) : 0,
-            alt: altitude ? parseFloat(altitude.toFixed(2)) : 0,
-            vel: speed ? parseFloat(speed.toFixed(2)) : 0,
-            accH: accuracy ? parseFloat(accuracy.toFixed(2)) : 0,
-            accV: altitudeAccuracy ? parseFloat(altitudeAccuracy.toFixed(2)) : 0,
-          };
-
-          // 1. Actualizamos el servicio para que el HTML muestre la precisión actual
-          this.gpsDataService.updateGpsData(this.gpsData);
+          // La actualización de gpsData y el servicio gpsDataService ahora se maneja
+          // directamente en GpsAcquisitionService, que ya incluye los filtros de
+          // precisión y velocidad. Aquí solo nos preocupamos de la parte visual.
 
           // 2. Movemos el marcador SIEMPRE (para que no parezca que "no funciona")
           if (this.userCircle && this.pulseCircle) {
@@ -1149,21 +1208,16 @@ export class MapaPage implements OnDestroy {
             this.userCircle.setLatLng(newLatLng);
             this.pulseCircle.setLatLng(newLatLng);
 
-            // 3. Solo centramos el mapa si la precisión es aceptable (< 10m)
-            if (accuracy <= 10 && this.map) {
-              this.map.panTo(newLatLng);
-            }
           }
-
-          // 4. BLOQUEO DE SEGURIDAD PARA DIBUJO
-          // Aquí está lo que buscas: si quieres usar este punto para un polígono
-          // en tu RegisterDataService, puedes validar que 'this.gpsData.accH' sea < 5
-          // antes de permitir el click en el botón de "Capturar".
         });
       }
     });
   } catch (error) {
-    console.error("Error GPS:", error);
+    console.error("Error al iniciar startLocationWatch:", error);
+    this.registerDataService.showToast(
+      'No se pudo iniciar el seguimiento GPS. Verifique los permisos.',
+      'danger'
+    );
   }
 }
 
@@ -1174,7 +1228,8 @@ export class MapaPage implements OnDestroy {
    */
   async findAndCenterUser() {
     if (!this.map || this.gpsData.lat === null) {
-      return;
+      this.registerDataService.showToast('Ubicación GPS aún no disponible.', 'warning', 'top');
+       return;
     }
 
     this.isLoading = true;
@@ -1183,6 +1238,11 @@ export class MapaPage implements OnDestroy {
 
     try {
       const { lat, lng } = this.gpsData;
+      if (!lat || !lng) {
+        this.registerDataService.showToast('Coordenadas GPS inválidas.', 'warning', 'top');
+        this.isLoading = false;
+        return;
+      }
 
       // Si los marcadores no existen, los creamos.
       if (!this.userCircle) {
@@ -1215,7 +1275,8 @@ export class MapaPage implements OnDestroy {
 
       this.map.setView([lat, lng], 18);
     } catch (error) {
-      // Aquí podrías mostrar una alerta al usuario
+      const errorMessage = error instanceof Error ? error.message : 'Error desconocido';
+      this.registerDataService.showToast(`Error al centrar: ${errorMessage}`, 'danger', 'middle');
     } finally {
       this.isLoading = false;
     }
@@ -1273,18 +1334,6 @@ export class MapaPage implements OnDestroy {
         this.updateUserLocationMarker();
       }
     });
-
-    // Suscripción para centrar el mapa en la primera ubicación válida
-    const firstLocationSub = this.gpsDataService.currentGpsData.subscribe(data => {
-      if (data && data.lat && data.lng && this.map) {
-        // Centramos el mapa en la primera ubicación válida y nos desuscribimos
-        this.map.setView([data.lat, data.lng], 16);
-        if (firstLocationSub) {
-          firstLocationSub.unsubscribe();
-        }
-      }
-    });
-
 
     const map = L.map('map', {
       center: [-9.00, -70.0152],

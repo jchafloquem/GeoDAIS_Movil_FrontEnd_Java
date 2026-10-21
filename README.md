@@ -25,3 +25,6 @@ ionic serve
 ionic build
 npx cap sync android
 npx cap open android
+npx cap run android
+ionic cap run android -l --external
+

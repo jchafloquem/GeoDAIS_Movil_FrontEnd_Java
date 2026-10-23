@@ -24,6 +24,321 @@
     background-image: url('/assets/leaflet-draw/spritesheet-2x.png');
   }
 }
+
+@media (prefers-reduced-motion: reduce) {
+  #main-content-map .gps-status-dot,
+  #main-content-map .network-status-button ion-icon,
+  #main-content-map .action-btn,
+  #main-content-map ion-fab-button {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+#main-content-map > ion-header {
+  z-index: 3000;
+}
+
+#main-content-map ion-toolbar {
+  --background: #0b923a;
+  --border-width: 0;
+  --color: #fff;
+  --min-height: 58px;
+  box-shadow: 0 3px 14px rgba(7, 66, 31, 0.24);
+}
+
+#main-content-map ion-toolbar ion-title {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding-inline: 6px;
+  font-size: 19px;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+}
+
+#main-content-map ion-toolbar ion-title ion-icon {
+  font-size: 23px;
+}
+
+#main-content-map ion-menu-button {
+  --color: #fff;
+  --border-radius: 12px;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  margin-inline-start: 6px;
+}
+
+#main-content-map ion-toolbar ion-buttons[slot="end"] {
+  gap: 2px;
+  padding-inline-end: 8px;
+}
+
+#main-content-map ion-toolbar ion-buttons[slot="end"] ion-button {
+  width: 40px;
+  height: 40px;
+  margin: 0;
+  --border-radius: 12px;
+  --color: #fff;
+  --padding-start: 8px;
+  --padding-end: 8px;
+  --background-hover: rgba(255, 255, 255, 0.16);
+  --background-activated: rgba(255, 255, 255, 0.22);
+}
+
+#main-content-map ion-toolbar ion-buttons[slot="end"] ion-button ion-icon {
+  font-size: 22px;
+}
+
+#main-content-map .app-version {
+  color: #fff;
+  font: 700 10px monospace;
+  margin-inline-start: 2px;
+  padding: 5px 7px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 999px;
+  background: rgba(0, 0, 0, 0.12);
+  white-space: nowrap;
+}
+
+#main-content-map .network-status-button ion-icon[color="success"] {
+  color: #dcfce7;
+}
+
+#main-content-map .gps-panel {
+  background:
+    radial-gradient(ellipse at 8% 0, rgba(13, 166, 66, 0.13), transparent 42%),
+    linear-gradient(145deg, rgba(17, 29, 40, 0.97), rgba(9, 18, 28, 0.96));
+  border: 1px solid rgba(255, 255, 255, 0.18);
+  border-radius: 20px;
+  box-shadow: 0 12px 34px rgba(0, 0, 0, 0.38), 0 2px 8px rgba(0, 0, 0, 0.18);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+}
+
+#main-content-map .gps-panel::after {
+  position: absolute;
+  top: 0;
+  left: 20px;
+  right: 20px;
+  height: 2px;
+  content: "";
+  background: linear-gradient(90deg, transparent, #22c55e, transparent);
+  opacity: 0.9;
+}
+
+#main-content-map .gps-panel.gps-medium::after {
+  background: linear-gradient(90deg, transparent, #fbbf24, transparent);
+}
+
+#main-content-map .gps-panel.gps-bad::after {
+  background: linear-gradient(90deg, transparent, #f04452, transparent);
+}
+
+#main-content-map .gps-panel-header {
+  min-height: 34px;
+  padding: 2px 2px 9px;
+}
+
+#main-content-map .gps-panel-title {
+  font-size: 15px;
+}
+
+#main-content-map .gps-panel .row {
+  min-height: 36px;
+  padding: 8px 3px;
+}
+
+#main-content-map .gps-panel .coordinates-row .cell {
+  padding: 7px 9px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.045);
+}
+
+#main-content-map .gps-panel .label {
+  letter-spacing: 0.025em;
+}
+
+#main-content-map .gps-panel .value {
+  font-size: 12px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+}
+
+#main-content-map .gps-panel .coordinates-row .value {
+  color: #fff;
+}
+
+#main-content-map .map-layer-controls {
+  padding: 5px;
+  border: 1px solid rgba(255, 255, 255, 0.24);
+  border-radius: 18px;
+  background: rgba(15, 23, 32, 0.72);
+  box-shadow: 0 8px 22px rgba(0, 0, 0, 0.3);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+#main-content-map .zoom-extend-btn-wrapper ion-fab-button,
+#main-content-map .zoom-in-btn-wrapper ion-fab-button,
+#main-content-map .zoom-out-btn-wrapper ion-fab-button,
+#main-content-map .download-map-btn-wrapper ion-fab-button,
+#main-content-map .edit-mode-btn-wrapper ion-fab-button,
+#main-content-map .locate-btn-wrapper ion-fab-button,
+#main-content-map .clear-btn-wrapper ion-fab-button,
+#main-content-map .map-layer-controls ion-fab-button {
+  --size: 48px;
+  width: 48px;
+  height: 48px;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  --border-radius: 16px;
+  transition: transform 160ms ease, box-shadow 160ms ease, filter 160ms ease;
+}
+
+#main-content-map ion-fab-button ion-icon,
+#main-content-map .action-btn ion-icon {
+  width: 22px;
+  height: 22px;
+  font-size: 22px;
+  flex: 0 0 22px;
+}
+
+#main-content-map .map-layer-controls {
+  gap: 6px;
+  padding: 4px;
+}
+
+#main-content-map .action-btn {
+  display: inline-flex;
+  width: 40px;
+  height: 40px;
+  align-items: center;
+  justify-content: center;
+  border-radius: 16px;
+  font-size: 24px;
+}
+
+#main-content-map .locate-btn-wrapper ion-fab-button,
+#main-content-map .clear-btn-wrapper ion-fab-button,
+#main-content-map .map-layer-controls ion-fab-button {
+  --size: 40px;
+  width: 40px;
+  height: 40px;
+}
+
+#main-content-map .zoom-extend-btn-wrapper ion-fab-button:active,
+#main-content-map .zoom-in-btn-wrapper ion-fab-button:active,
+#main-content-map .zoom-out-btn-wrapper ion-fab-button:active,
+#main-content-map .download-map-btn-wrapper ion-fab-button:active,
+#main-content-map .edit-mode-btn-wrapper ion-fab-button:active,
+#main-content-map .locate-btn-wrapper ion-fab-button:active,
+#main-content-map .clear-btn-wrapper ion-fab-button:active,
+#main-content-map .map-layer-controls ion-fab-button:active {
+  filter: brightness(1.12);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.24);
+}
+
+ion-menu {
+  --width: min(310px, 86vw);
+  --background: #f7faf8;
+}
+
+ion-menu ion-toolbar {
+  --background: #0b923a;
+  --color: #fff;
+  --min-height: 58px;
+}
+
+ion-menu ion-title {
+  font-size: 17px;
+  font-weight: 700;
+}
+
+ion-menu ion-list {
+  padding: 10px;
+  background: transparent;
+}
+
+ion-menu ion-item {
+  --background: transparent;
+  --background-activated: rgba(13, 166, 66, 0.1);
+  --background-hover: rgba(13, 166, 66, 0.06);
+  --border-radius: 12px;
+  --inner-border-width: 0;
+  --min-height: 50px;
+  --padding-start: 12px;
+  margin-block: 3px;
+  font-size: 14px;
+}
+
+ion-menu ion-item ion-icon {
+  font-size: 20px;
+}
+
+@media (max-width: 360px) {
+  #main-content-map ion-toolbar ion-buttons[slot="end"] {
+    gap: 0;
+    padding-inline-end: 5px;
+  }
+
+  #main-content-map ion-toolbar ion-buttons[slot="end"] ion-button {
+    width: 36px;
+    --padding-start: 6px;
+    --padding-end: 6px;
+  }
+
+  #main-content-map ion-toolbar ion-title {
+    font-size: 17px;
+  }
+
+  #main-content-map .app-version {
+    font-size: 9px;
+    padding-inline: 5px;
+  }
+
+  #main-content-map .gps-panel .coordinates-row .cell {
+    padding-inline: 5px;
+    gap: 4px;
+  }
+
+  #main-content-map .gps-panel .coordinates-row .label {
+    font-size: 8px;
+  }
+}
+
+@media (max-height: 700px) {
+  #main-content-map .zoom-extend-btn-wrapper ion-fab-button,
+  #main-content-map .zoom-in-btn-wrapper ion-fab-button,
+  #main-content-map .zoom-out-btn-wrapper ion-fab-button,
+  #main-content-map .download-map-btn-wrapper ion-fab-button,
+  #main-content-map .edit-mode-btn-wrapper ion-fab-button,
+  #main-content-map .locate-btn-wrapper ion-fab-button,
+  #main-content-map .clear-btn-wrapper ion-fab-button,
+  #main-content-map .map-layer-controls ion-fab-button {
+    --size: 40px;
+    width: 40px;
+    height: 40px;
+  }
+
+  #main-content-map ion-fab-button ion-icon,
+  #main-content-map .action-btn ion-icon {
+    width: 20px;
+    height: 20px;
+    font-size: 20px;
+    flex-basis: 20px;
+  }
+
+  #main-content-map .map-layer-controls {
+    gap: 4px;
+    padding: 4px;
+  }
+
+  #main-content-map .action-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
 /* Core CSS required for Ionic components to work properly */
 @import "@ionic/angular/css/core.css";
 

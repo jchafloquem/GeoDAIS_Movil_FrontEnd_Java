@@ -2,7 +2,7 @@ import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { IonHeader, IonToolbar, IonTitle, IonContent, IonButtons, IonBackButton, IonList, IonItem, IonLabel, IonNote } from '@ionic/angular/standalone';
 import { Subscription } from 'rxjs';
-import { GpsData, GpsDataService } from 'src/app/services/gps-data.service';
+import { getGpsAccuracyQuality, GpsData, GpsDataService } from 'src/app/services/gps-data.service';
 
 @Component({
   selector: 'app-skyplot',
@@ -30,5 +30,8 @@ export class SkyplotPage implements OnInit, OnDestroy {
       this.gpsSubscription.unsubscribe();
     }
   }
-}
 
+  public getGpsAccuracyClass(): string {
+    return `quality-${getGpsAccuracyQuality(this.gpsData.accH)}`;
+  }
+}

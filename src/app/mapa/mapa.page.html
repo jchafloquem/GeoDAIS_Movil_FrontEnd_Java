@@ -68,10 +68,10 @@
         GeoDAIS
       </ion-title>
       <ion-buttons slot="end">
-        <ion-button fill="clear" class="skyplot-button" routerLink="/skyplot" title="Ver estado de (GPS)">
+        <ion-button fill="clear" class="skyplot-button" routerLink="/skyplot" title="Ver estado del GPS" aria-label="Ver estado del GPS">
           <ion-icon slot="icon-only" name="planet-outline"></ion-icon>
         </ion-button>
-        <ion-button fill="clear" class="network-status-button">
+        <ion-button fill="clear" class="network-status-button" [attr.aria-label]="isOnline ? 'Con conexión' : 'Sin conexión'">
           <ion-icon slot="icon-only" name="cellular-outline" [color]="isOnline ? 'success' : 'danger'" title="Estado de la conexión" [class.status-changed]="networkStatusChanged"></ion-icon>
         </ion-button>
         <span class="app-version">V1.0.0</span>
@@ -95,106 +95,111 @@
       translucent="true"
       backdropDismiss="false">
     </ion-loading>
-    <ion-fab class="satellite-layer-btn-wrapper" slot="fixed" vertical="bottom">
-      <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'">
+    <ion-fab class="map-layer-controls" slot="fixed" vertical="bottom">
+      <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'" aria-label="Vista satelital" title="Vista satelital">
         <ion-icon name="image-outline"></ion-icon>
       </ion-fab-button>
-    </ion-fab>
-    <ion-fab class="streets-layer-btn-wrapper" slot="fixed" vertical="bottom">
-      <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'">
+      <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'" aria-label="Vista de calles" title="Vista de calles">
         <ion-icon name="layers-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
-    <div class="gps-panel" [ngClass]="getGpsAccuracyClass()">
-      <!-- fila Latitud / Longitud -->
-      <div class="row">
+    <section class="gps-panel" [ngClass]="getGpsAccuracyClass()" aria-label="Estado y datos de ubicación GPS">
+      <div class="gps-panel-header">
+        <span class="gps-panel-title">
+          <ion-icon name="locate-outline" aria-hidden="true"></ion-icon>
+          Ubicación GPS
+        </span>
+        <span class="gps-status" aria-live="polite">
+          <span class="gps-status-dot" aria-hidden="true"></span>
+          {{ getGpsStatusLabel() }}
+        </span>
+      </div>
+      <div class="row coordinates-row">
         <div class="cell">
           <span class="label">Latitud</span>
-          <span class="value">{{ gpsData.lat | number:'1.4-4' }}</span>
+          <span class="value">{{ gpsData.lat !== null ? (gpsData.lat | number:'1.6-6') : '—' }}</span>
         </div>
         <div class="cell">
           <span class="label">Longitud</span>
-          <span class="value">{{ gpsData.lng | number:'1.4-4' }}</span>
+          <span class="value">{{ gpsData.lng !== null ? (gpsData.lng | number:'1.6-6') : '—' }}</span>
         </div>
       </div>
-      <!-- fila Altitud / Velocidad -->
       <div class="row">
         <div class="cell">
           <span class="label">Altitud</span>
-          <span class="value">{{ gpsData.alt | number:'1.4-4' }}</span>
+          <span class="value">{{ gpsData.alt !== null ? (gpsData.alt | number:'1.0-1') + ' m' : '—' }}</span>
         </div>
         <div class="cell">
           <span class="label">Velocidad</span>
-          <span class="value">{{ gpsData.vel | number:'1.4-4' }}</span>
+          <span class="value">{{ gpsData.vel !== null ? (gpsData.vel | number:'1.0-1') + ' m/s' : '—' }}</span>
         </div>
       </div>
-      <!-- fila Horizontal / Vertical -->
-      <div class="row">
+      <div class="row gps-accuracy-row">
         <div class="cell">
-          <span class="label">Pres. Horizontal</span>
-          <span class="value">{{ gpsData.accH !== null ? (gpsData.accH | number:'1.0-0') + ' m' : '—' }}</span>
+          <span class="label">Precisión H. estimada</span>
+          <span class="value">{{ gpsData.accH !== null ? '± ' + (gpsData.accH | number:'1.1-1') + ' m' : '—' }}</span>
         </div>
         <div class="cell">
-          <span class="label">Pres. Vertical</span>
-          <span class="value">{{ gpsData.accV !== null ? (gpsData.accV | number:'1.0-0') + ' m' : '—' }}</span>
+          <span class="label">Precisión V. estimada</span>
+          <span class="value">{{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : '—' }}</span>
         </div>
       </div>
-    </div>
+    </section>
     <ion-fab class="zoom-in-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-      <ion-fab-button (click)="zoomIn()">
+      <ion-fab-button (click)="zoomIn()" aria-label="Acercar mapa" title="Acercar">
         <ion-icon name="add-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
     <ion-fab class="zoom-out-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-      <ion-fab-button (click)="zoomOut()">
+      <ion-fab-button (click)="zoomOut()" aria-label="Alejar mapa" title="Alejar">
         <ion-icon name="remove-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
     <ion-fab class="download-map-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-      <ion-fab-button (click)="startDownloadProcess()">
+      <ion-fab-button (click)="startDownloadProcess()" aria-label="Descargar mapa" title="Descargar mapa">
         <ion-icon name="download-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
 
     <!-- BOTÓN PARA ACTIVAR/DESACTIVAR MODO EDICIÓN -->
     <ion-fab class="edit-mode-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-      <ion-fab-button (click)="toggleEditMode()" [color]="isEditingMode ? 'warning' : 'light'">
+      <ion-fab-button (click)="toggleEditMode()" [attr.aria-label]="isEditingMode ? 'Desactivar edición' : 'Activar edición'" title="Editar mapa">
         <ion-icon name="create-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
-    <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
-      <ion-fab-button (click)="resetUserLocation()">
+    <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="top" horizontal="start">
+      <ion-fab-button (click)="resetUserLocation()" aria-label="Limpiar marcador GPS" title="Limpiar marcador GPS">
         <ion-icon name="trash-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
     <ion-fab class="zoom-extend-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
-      <ion-fab-button (click)="zoomToPeru()">
+      <ion-fab-button (click)="zoomToPeru()" aria-label="Ver todo el Perú" title="Ver todo el Perú">
         <ion-icon name="globe-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
 
     <ion-fab class="locate-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
-      <ion-fab-button (click)="findAndCenterUser()">
+      <ion-fab-button (click)="findAndCenterUser()" aria-label="Centrar en mi ubicación" title="Centrar en mi ubicación">
         <ion-icon name="locate"></ion-icon>
       </ion-fab-button>
     </ion-fab>
 
     <!-- Botones de acción (estilo manual) -->
     <!-- Botón para añadir un vértice mientras se dibuja -->
-    <div *ngIf="isDrawingPolygon || isDrawingLine" class="action-btn add-vertex-btn" (click)="addPolygonPoint()" title="Añadir Vértice">
+    <button *ngIf="isDrawingPolygon || isDrawingLine" type="button" class="action-btn add-vertex-btn" (click)="addPolygonPoint()" title="Añadir vértice" aria-label="Añadir vértice">
       <ion-icon name="add-circle-outline"></ion-icon>
-    </div>
+    </button>
     <!-- Botón para iniciar/detener el dibujo de LÍNEA -->
-    <div *ngIf="canDrawLines && !isDrawingPolygon" class="action-btn draw-line-btn" (click)="toggleLineDrawing()" [class.active]="isDrawingLine" title="Dibujar Línea Caminando">
+    <button *ngIf="canDrawLines && !isDrawingPolygon" type="button" class="action-btn draw-line-btn" (click)="toggleLineDrawing()" [class.active]="isDrawingLine" [attr.aria-label]="isDrawingLine ? 'Detener dibujo de línea' : 'Dibujar línea caminando'" [attr.aria-pressed]="isDrawingLine">
       <ion-icon [name]="isDrawingLine ? 'stop-circle-outline' : 'analytics-outline'"></ion-icon>
-    </div>
+    </button>
     <!-- Botón para iniciar/detener el dibujo de POLÍGONO -->
-    <div *ngIf="canDrawPolygons && !isDrawingLine" class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" title="Dibujar Polígono Caminando">
+    <button *ngIf="canDrawPolygons && !isDrawingLine" type="button" class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" [attr.aria-label]="isDrawingPolygon ? 'Detener dibujo de polígono' : 'Dibujar polígono caminando'" [attr.aria-pressed]="isDrawingPolygon">
       <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
-    </div>
+    </button>
     <!-- Botón para añadir un PUNTO en la ubicación actual (se oculta durante el dibujo) -->
-    <div *ngIf="canDrawPoints && !isDrawingPolygon && !isDrawingLine" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir Punto en mi Ubicación">
+    <button *ngIf="canDrawPoints && !isDrawingPolygon && !isDrawingLine" type="button" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir punto en mi ubicación" aria-label="Añadir punto en mi ubicación">
       <ion-icon name="location-outline"></ion-icon>
-    </div>
+    </button>
   </ion-content>
 </div>

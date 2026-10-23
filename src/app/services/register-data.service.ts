@@ -13,7 +13,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
-import { GpsDataService } from './gps-data.service';
+import { GPS_ACCURACY_THRESHOLDS, GpsDataService, isValidGpsAccuracy } from './gps-data.service';
 
 // Reutilizamos la interfaz de propiedades
 export interface ValidationResult {
@@ -1097,10 +1097,11 @@ export class RegisterDataService {
           maximumAge: 10000 // Aceptamos una ubicación de hasta 10 segundos de antigüedad
         });
 
-        // MEJORA: Validar la precisión horizontal (accH) para asegurar datos de calidad.
-        // Si la precisión es mayor a 15 metros, se considera inaceptable.
         const horizontalAccuracy = position.coords.accuracy;
-        if (horizontalAccuracy > 15) {
+        if (!isValidGpsAccuracy(horizontalAccuracy)) {
+          throw new Error('El GPS no reportó una precisión horizontal válida.');
+        }
+        if (horizontalAccuracy > GPS_ACCURACY_THRESHOLDS.photo) {
           throw new Error(`La precisión del GPS es muy baja (${horizontalAccuracy.toFixed(1)}m). Por favor, busque un lugar con mejor señal e intente de nuevo.`);
         }
 
@@ -1110,7 +1111,15 @@ export class RegisterDataService {
       }
       // --- FIN: LÓGICA DE GEOLOCALIZACIÓN ROBUSTA ---
       const coords = position.coords;
-      if (!coords || typeof coords.latitude !== 'number' || typeof coords.longitude !== 'number') {
+      if (
+        !coords ||
+        !Number.isFinite(coords.latitude) ||
+        coords.latitude < -90 ||
+        coords.latitude > 90 ||
+        !Number.isFinite(coords.longitude) ||
+        coords.longitude < -180 ||
+        coords.longitude > 180
+      ) {
         throw new Error('Coordenadas inválidas o nulas recibidas del GPS.');
       }
 

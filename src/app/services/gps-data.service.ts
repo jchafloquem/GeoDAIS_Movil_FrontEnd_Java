@@ -10,6 +10,26 @@ export interface GpsData {
   accV: number | null;
 }
 
+export const GPS_ACCURACY_THRESHOLDS = {
+  high: 5,
+  medium: 15,
+  drawing: 10,
+  photo: 15,
+} as const;
+
+export type GpsAccuracyQuality = 'good' | 'medium' | 'bad';
+
+export function isValidGpsAccuracy(accuracy: number | null | undefined): accuracy is number {
+  return typeof accuracy === 'number' && Number.isFinite(accuracy) && accuracy >= 0;
+}
+
+export function getGpsAccuracyQuality(accuracy: number | null): GpsAccuracyQuality {
+  if (!isValidGpsAccuracy(accuracy) || accuracy > GPS_ACCURACY_THRESHOLDS.medium) {
+    return 'bad';
+  }
+  return accuracy <= GPS_ACCURACY_THRESHOLDS.high ? 'good' : 'medium';
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -25,4 +45,3 @@ export class GpsDataService {
     this.gpsDataSource.next(data);
   }
 }
-

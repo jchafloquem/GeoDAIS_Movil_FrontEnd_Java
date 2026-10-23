@@ -27,16 +27,16 @@
         <ion-note slot="end">{{ gpsData.vel | number:'1.2-2' }}</ion-note>
       </ion-item>
       <ion-item>
-        <ion-label>Precisión Horizontal (m)</ion-label>
-        <ion-note slot="end" [ngClass]="{
-          'quality-good': gpsData.accH !== null && gpsData.accH < 5,
-          'quality-medium': gpsData.accH !== null && gpsData.accH >= 5 && gpsData.accH <= 10,
-          'quality-bad': gpsData.accH !== null && gpsData.accH > 10
-        }">{{ gpsData.accH | number:'1.2-2' }}</ion-note>
+        <ion-label>Precisión horizontal estimada</ion-label>
+        <ion-note slot="end" [ngClass]="getGpsAccuracyClass()">
+          {{ gpsData.accH !== null ? '± ' + (gpsData.accH | number:'1.1-1') + ' m' : '—' }}
+        </ion-note>
       </ion-item>
       <ion-item>
-        <ion-label>Precisión Vertical (m)</ion-label>
-        <ion-note slot="end">{{ gpsData.accV | number:'1.2-2' }}</ion-note>
+        <ion-label>Precisión vertical estimada</ion-label>
+        <ion-note slot="end">
+          {{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : '—' }}
+        </ion-note>
       </ion-item>
     </ion-list>
   </div>

@@ -1,6 +1,6 @@
 import { Injectable, NgZone } from '@angular/core';
 import { Geolocation, PositionOptions } from '@capacitor/geolocation';
-import { GpsData, GpsDataService } from './gps-data.service';
+import { GpsData, GpsDataService, isValidGpsAccuracy } from './gps-data.service';
 import { ToastController } from '@ionic/angular/standalone';
 
 
@@ -78,13 +78,27 @@ export class GpsAcquisitionService {
           }
 
           if (position) {
+            const { latitude, longitude, accuracy, altitude, altitudeAccuracy, speed } = position.coords;
+            if (
+              !Number.isFinite(latitude) ||
+              latitude < -90 ||
+              latitude > 90 ||
+              !Number.isFinite(longitude) ||
+              longitude < -180 ||
+              longitude > 180 ||
+              !isValidGpsAccuracy(accuracy)
+            ) {
+              console.warn('[GpsAcquisitionService] Se descartó una posición GPS inválida.');
+              return;
+            }
+
             const gpsData: GpsData = {
-              lat: position.coords.latitude ?? null,
-              lng: position.coords.longitude ?? null,
-              alt: position.coords.altitude ?? null,
-              vel: position.coords.speed ?? null,
-              accH: position.coords.accuracy ?? null,
-              accV: position.coords.altitudeAccuracy ?? null,
+              lat: latitude,
+              lng: longitude,
+              alt: typeof altitude === 'number' && Number.isFinite(altitude) ? altitude : null,
+              vel: typeof speed === 'number' && Number.isFinite(speed) ? speed : null,
+              accH: accuracy,
+              accV: isValidGpsAccuracy(altitudeAccuracy) ? altitudeAccuracy : null,
             };
             this.gpsDataService.updateGpsData(gpsData);
           }

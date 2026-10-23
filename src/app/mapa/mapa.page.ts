@@ -63,7 +63,13 @@ import { GeoSearchControl, OpenStreetMapProvider } from 'leaflet-geosearch';
 import { Network } from '@capacitor/network';
 import { Device } from '@capacitor/device';
 import { RegisterDataService } from 'src/app/services/register-data.service';
-import { GpsDataService, GpsData } from 'src/app/services/gps-data.service';
+import {
+  GPS_ACCURACY_THRESHOLDS,
+  getGpsAccuracyQuality,
+  GpsData,
+  GpsDataService,
+  isValidGpsAccuracy,
+} from 'src/app/services/gps-data.service';
 import { GpsAcquisitionService } from 'src/app/services/gps-acquisition.service';
 import { Subscription } from 'rxjs';
 import { ApiService } from 'src/app/services/api.service';
@@ -152,6 +158,7 @@ export class MapaPage implements OnDestroy {
   private crosshairMarker: any | null = null;
   private watchId: string | null = null;
   private fixedPathDistance = 0;
+  private drawingAccuracy: number | null = null;
   private gpsSubscription: Subscription | null = null;
   private polygonVertices: any[] = [];
 
@@ -211,14 +218,21 @@ export class MapaPage implements OnDestroy {
    * @returns 'gps-good', 'gps-medium', o 'gps-bad'.
    */
   public getGpsAccuracyClass(): string {
-    const accH = this.gpsData.accH;
-    if (accH === null || accH > 15) {
-      return 'gps-bad'; // Mala precisión (rojo)
+    return `gps-${getGpsAccuracyQuality(this.gpsData.accH)}`;
+  }
+
+  public getGpsStatusLabel(): string {
+    const quality = getGpsAccuracyQuality(this.gpsData.accH);
+    if (!isValidGpsAccuracy(this.gpsData.accH)) {
+      return 'Buscando señal';
     }
-    if (accH > 5) {
-      return 'gps-medium'; // Precisión media (ámbar)
+    if (quality === 'bad') {
+      return 'Señal débil';
     }
-    return 'gps-good'; // Buena precisión (verde)
+    if (quality === 'medium') {
+      return 'Precisión media';
+    }
+    return 'Precisión alta';
   }
 
   async ionViewWillEnter() {
@@ -512,9 +526,13 @@ export class MapaPage implements OnDestroy {
   addPolygonPoint() {
     // --- CONTROL DE PRECISIÓN HORIZONTAL ---
     // Solo permite añadir un punto si la precisión del GPS es de 10 metros o menos.
-    const currentAccuracy = this.gpsData.accH;
-    if (currentAccuracy === null || currentAccuracy > 10) {
-      this.registerDataService.showToast(`Precisión GPS muy baja (${currentAccuracy?.toFixed(1) || 'N/A'} m). Espere a que sea ≤ 10m.`, 'warning', 'middle');
+    const currentAccuracy = this.drawingAccuracy;
+    if (!isValidGpsAccuracy(currentAccuracy) || currentAccuracy > GPS_ACCURACY_THRESHOLDS.drawing) {
+      this.registerDataService.showToast(
+        `Precisión GPS muy baja (${currentAccuracy?.toFixed(1) || 'N/A'} m). Espere a que sea ≤ ${GPS_ACCURACY_THRESHOLDS.drawing}m.`,
+        'warning',
+        'middle'
+      );
       return;
     }
 
@@ -568,6 +586,7 @@ export class MapaPage implements OnDestroy {
     this.polygonVertices = [];
     this.vertexMarkers.clearLayers();
     this.fixedPathDistance = 0;
+    this.drawingAccuracy = null;
     if (this.walkingPolyline) {
       this.map.removeLayer(this.walkingPolyline);
     }
@@ -616,7 +635,22 @@ export class MapaPage implements OnDestroy {
           return;
         }
 
-        const newPoint = L.latLng(position.coords.latitude, position.coords.longitude);
+        const { latitude, longitude, accuracy } = position.coords;
+        if (
+          !Number.isFinite(latitude) ||
+          latitude < -90 ||
+          latitude > 90 ||
+          !Number.isFinite(longitude) ||
+          longitude < -180 ||
+          longitude > 180
+        ) {
+          this.drawingAccuracy = null;
+          console.warn('[MapaPage] Se descartó una posición GPS inválida durante el dibujo.');
+          return;
+        }
+
+        this.drawingAccuracy = isValidGpsAccuracy(accuracy) ? accuracy : null;
+        const newPoint = L.latLng(latitude, longitude);
 
         if (this.crosshairMarker) {
           this.crosshairMarker.setLatLng(newPoint);
@@ -645,6 +679,7 @@ export class MapaPage implements OnDestroy {
 
   private stopDrawingByWalking() {
     // 1. Detener seguimiento de ubicación
+    this.drawingAccuracy = null;
     if (this.watchId) {
       Geolocation.clearWatch({ id: this.watchId });
       this.watchId = null;

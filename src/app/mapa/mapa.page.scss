@@ -58,11 +58,11 @@ ion-toolbar {
 }
 
 .zoom-in-btn-wrapper {
-  top: 60px; /* 10px (base) + 40px (alto) + 10px (gap) */
+  top: 60px;
 }
 
 .zoom-out-btn-wrapper {
-  top: 110px; /* 60px + 50px */
+  top: 110px;
 }
 
 .locate-btn-wrapper {
@@ -92,7 +92,6 @@ ion-toolbar {
   /* Efecto de desenfoque para el fondo */
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
-  color: #fff;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 6px;
   font-size: 13px;
@@ -197,32 +196,16 @@ ion-toolbar {
   }
 }
 
-.satellite-layer-btn-wrapper,
-.streets-layer-btn-wrapper {
-  bottom: 150px;
+.map-layer-controls {
   z-index: 1000;
+  display: flex;
+  align-items: center;
   overflow: visible;
-  ion-fab-button {
-    width: 40px;
-    height: 40px;
-    --background: white;
-    --color: #333;
-    --box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
-    transition: all 0.2s ease-in-out;
-    &.active-layer {
-      --background: #0DA642; /* Azul primario de Ionic */
-      --color: white;
-    }
-  }
-}
 
-.satellite-layer-btn-wrapper {
-  left: 50%;
-  transform: translateX(calc(-100% - 4px)); /* Mueve a la izquierda del centro */
-}
-.streets-layer-btn-wrapper {
-  left: 50%;
-  transform: translateX(4px); /* Mueve a la derecha del centro */
+  ion-fab-button {
+    margin: 0;
+    transition: all 0.2s ease-in-out;
+  }
 }
 
 .crosshair-icon {
@@ -262,7 +245,7 @@ ion-toolbar {
 }
 
 .download-map-btn-wrapper {
-  top: 160px; /* 110px + 50px */
+  top: 160px;
   right: 15px;
   margin-inline-end: 0;
   z-index: 1000;
@@ -286,7 +269,7 @@ ion-toolbar {
   box-shadow: none;
 }
 .edit-mode-btn-wrapper {
-  top: 210px; /* 160px + 50px */
+  top: 210px;
   right: 15px;
   margin-inline-end: 0;
   z-index: 1000;
@@ -326,7 +309,7 @@ ion-toolbar {
 }
 
 .draw-walk-btn {
-  bottom: 250px; // Posición base
+  bottom: 313px;
   background-color: #0DA642; // Restaurado a tu color azul
   &.active {
     background-color: #eb445a; // Color danger (rojo)
@@ -334,7 +317,7 @@ ion-toolbar {
 }
 
 .draw-line-btn {
-  bottom: 300px; // 250px (base) + 40px (alto botón) + 10px (gap)
+  bottom: 363px;
   background-color: #0DA642; // Restaurado a tu color azul
   &.active {
     background-color: #eb445a; // Color danger (rojo)
@@ -342,42 +325,41 @@ ion-toolbar {
 }
 
 .add-point-btn {
-  // Se posiciona encima del botón de dibujar polígono, en el mismo lugar que el botón de "añadir vértice"
-  bottom: 350px; // 300px (línea) + 40px + 10px
+  bottom: 413px;
   background-color: #0DA642; // Restaurado a tu color azul
 }
 
 .add-vertex-btn {
-  // Aparece encima del botón de detener cuando se está dibujando
-  bottom: 350px; // Posición más alta para no solapar con ningún botón de "stop"
+  bottom: 413px;
   background-color: #0DA642; // Restaurado a tu color azul
 }
 
 // Estilos para los controles de Leaflet y plugins, que requieren ::ng-deep para sobreescribir los estilos globales.
 :host ::ng-deep {
-  /* Ajuste para posicionar la escala de Leaflet sobre el panel GPS */
+  /* Deja la escala por encima de la leyenda y del panel GPS. */
   .leaflet-bottom.leaflet-left {
-    bottom: 140px; // Lo subimos para que quede sobre el panel GPS
-    z-index: 2001; // Aseguramos que esté por encima del panel GPS
+    bottom: calc(282px + env(safe-area-inset-bottom));
+    z-index: 2001;
     left: 4px;
 
     .leaflet-control-scale {
-      background: rgba(13, 166, 66, 0.7);
-      border: 1px solid rgba(255, 255, 255, 0.4);
-      border-radius: 2px;
-      padding: 2px 5px;
+      background: rgba(11, 110, 52, 0.92);
+      border: 1px solid rgba(255, 255, 255, 0.72);
+      border-radius: 6px;
+      padding: 4px 7px;
       color: white;
-      border: none;
-      box-shadow: none;
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
 
     .leaflet-control-scale-line {
-      // El texto y la línea de la escala.
       background-color: transparent;
-      border-color: white; // Hace que la línea de la escala sea blanca.
+      border-color: rgba(255, 255, 255, 0.95);
       box-shadow: none;
       color: white;
-      text-shadow: none; // ¡Esta es la línea clave que elimina la sombra blanca!
+      font-size: 11px;
+      font-weight: 700;
+      line-height: 1.3;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
     }
   }
 
@@ -385,9 +367,9 @@ ion-toolbar {
   .leaflet-control-geosearch {
     // El botón de búsqueda (lupa)
     a.leaflet-bar-part {
-      width: 40px;
-      height: 40px;
-      line-height: 40px;
+      width: 48px;
+      height: 48px;
+      line-height: 48px;
       background-color: #0DA642; // Mismo azul que los botones de zoom
       border-radius: 50%; // Totalmente redondo
       border: none;
@@ -397,15 +379,15 @@ ion-toolbar {
       &::before {
         border-top-color: white;
         width: 8px;
-        top: 23px;
-        left: 20px;
+        top: 27px;
+        left: 25px;
       }
       &::after {
         border-color: white;
-        width: 12px;
-        height: 12px;
-        top: 14px;
-        left: 14px;
+        width: 14px;
+        height: 14px;
+        top: 16px;
+        left: 16px;
       }
 
       // Efecto hover similar a los botones de Ionic
@@ -422,9 +404,9 @@ ion-toolbar {
       }
 
       form {
-        height: 40px;
+        height: 48px;
         // Posicionamos el formulario justo a la derecha del botón
-        left: 40px;
+        left: 48px;
         // Redondeamos las esquinas derechas
         border-radius: 0 20px 20px 0;
         box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
@@ -433,7 +415,7 @@ ion-toolbar {
       }
 
       form input {
-        height: 40px;
+        height: 48px;
         border-radius: 0 20px 20px 0;
       }
     }
@@ -448,17 +430,15 @@ ion-toolbar {
   }
 
 }
-ion-toolbar ion-buttons[slot="end"] {
-  .app-version {
-    color: white;
-    font-size: 11px;
-    font-family: monospace;
-    margin-inline-end: 8px;
-    white-space: nowrap;
-  }
 
+@media (max-height: 700px) {
+  :host ::ng-deep .leaflet-bottom.leaflet-left {
+    bottom: calc(255px + env(safe-area-inset-bottom));
+  }
+}
+ion-toolbar ion-buttons[slot="end"] {
   .skyplot-button {
-    --color: white;
+    --color: #fff;
     // Aumenta el área táctil para que sea igual al botón de red
     --padding-start: 8px;
     --padding-end: 8px;
@@ -498,5 +478,356 @@ ion-toolbar ion-buttons[slot="end"] {
   100% {
     transform: scale(1);
     opacity: 1;
+  }
+}
+
+.zoom-extend-btn-wrapper {
+  top: 10px;
+}
+
+.zoom-in-btn-wrapper {
+  top: 60px;
+}
+
+.zoom-out-btn-wrapper {
+  top: 110px;
+}
+
+.download-map-btn-wrapper {
+  top: 160px;
+}
+
+.edit-mode-btn-wrapper {
+  top: 210px;
+}
+
+.zoom-extend-btn-wrapper,
+.zoom-in-btn-wrapper,
+.zoom-out-btn-wrapper,
+.download-map-btn-wrapper,
+.edit-mode-btn-wrapper {
+  right: 12px;
+}
+
+.gps-panel {
+  bottom: env(safe-area-inset-bottom);
+  left: 10px;
+  right: 10px;
+  z-index: 2001;
+  padding: 8px 10px 4px;
+  color: #f8fafc;
+  background: rgba(15, 23, 32, 0.94);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+  border-radius: 16px;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.32);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+}
+
+.gps-panel::before {
+  display: none;
+}
+
+.gps-panel-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  min-height: 28px;
+  padding: 0 2px 6px;
+}
+
+.gps-panel-title {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+  color: #fff;
+  font-size: 14px;
+  font-weight: 700;
+  letter-spacing: 0.02em;
+
+  ion-icon {
+    color: #4ade80;
+    font-size: 17px;
+  }
+}
+
+.gps-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  color: #cbd5e1;
+  font-size: 11px;
+  font-weight: 600;
+  padding: 5px 8px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.06);
+  white-space: nowrap;
+}
+
+.gps-status-dot {
+  width: 8px;
+  height: 8px;
+  flex: 0 0 8px;
+  border-radius: 50%;
+  background: #f04452;
+}
+
+.gps-panel.gps-good .gps-status-dot {
+  background: #22c55e;
+  box-shadow: 0 0 8px rgba(34, 197, 94, 0.7);
+}
+
+.gps-panel.gps-good .gps-status {
+  color: #bbf7d0;
+  background: rgba(34, 197, 94, 0.12);
+  border-color: rgba(34, 197, 94, 0.24);
+}
+
+.gps-panel.gps-medium .gps-status-dot {
+  background: #fbbf24;
+  box-shadow: 0 0 8px rgba(251, 191, 36, 0.65);
+}
+
+.gps-panel.gps-medium .gps-status {
+  color: #fde68a;
+  background: rgba(251, 191, 36, 0.12);
+  border-color: rgba(251, 191, 36, 0.24);
+}
+
+.gps-panel.gps-bad .gps-status-dot {
+  background: #f04452;
+  box-shadow: 0 0 8px rgba(240, 68, 82, 0.65);
+}
+
+.gps-panel.gps-bad .gps-status {
+  color: #fecdd3;
+  background: rgba(240, 68, 82, 0.12);
+  border-color: rgba(240, 68, 82, 0.24);
+}
+
+.gps-panel .row,
+.gps-panel.gps-good .row,
+.gps-panel.gps-medium .row,
+.gps-panel.gps-bad .row,
+.gps-panel .row:nth-child(odd),
+.gps-panel .row:nth-child(even) {
+  gap: 10px;
+  min-height: 32px;
+  padding: 6px 2px;
+  background: transparent;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.gps-panel .cell {
+  gap: 6px;
+  min-width: 0;
+}
+
+.gps-panel .coordinates-row .cell {
+  align-items: center;
+  flex-direction: row;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.gps-panel .gps-accuracy-row .cell {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.gps-panel .label {
+  color: #94a3b8;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.025em;
+}
+
+.gps-panel .value {
+  color: #f8fafc;
+  font-family: ui-monospace, SFMono-Regular, Consolas, monospace;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.coordinates-row .value {
+  font-size: clamp(11px, 3.2vw, 14px);
+  letter-spacing: -0.035em;
+  color: #fff;
+}
+
+.locate-btn-wrapper {
+  bottom: calc(263px + env(safe-area-inset-bottom));
+  right: 16px;
+  z-index: 2002;
+}
+
+.map-layer-controls {
+  top: auto;
+  bottom: calc(190px + env(safe-area-inset-bottom));
+  left: 50%;
+  right: auto;
+  flex-direction: row;
+  transform: translateX(-50%);
+  gap: 6px;
+  padding: 4px;
+  z-index: 2002;
+}
+
+.clear-btn-wrapper {
+  top: auto;
+  bottom: calc(213px + env(safe-area-inset-bottom));
+  left: auto;
+  right: 16px;
+  z-index: 2002;
+}
+
+.zoom-extend-btn-wrapper ion-fab-button,
+.zoom-in-btn-wrapper ion-fab-button,
+.zoom-out-btn-wrapper ion-fab-button,
+.download-map-btn-wrapper ion-fab-button,
+.edit-mode-btn-wrapper ion-fab-button,
+.locate-btn-wrapper ion-fab-button,
+.clear-btn-wrapper ion-fab-button,
+.map-layer-controls ion-fab-button {
+  width: 44px;
+  height: 44px;
+  --background: rgba(15, 23, 32, 0.92);
+  --color: #fff;
+  --border-radius: 14px;
+  --box-shadow: 0 4px 12px rgba(0, 0, 0, 0.28);
+}
+
+.locate-btn-wrapper ion-fab-button {
+  --size: 40px;
+  width: 40px;
+  height: 40px;
+  --background: #0DA642;
+}
+
+.clear-btn-wrapper ion-fab-button {
+  --background: rgba(190, 35, 50, 0.94);
+}
+
+.map-layer-controls ion-fab-button {
+  --background: rgba(255, 255, 255, 0.94);
+  --color: #334155;
+  transition: transform 150ms ease, background-color 150ms ease;
+
+  &.active-layer {
+    --background: #138a4a;
+    --color: #fff;
+  }
+}
+
+.zoom-extend-btn-wrapper ion-fab-button:active,
+.zoom-in-btn-wrapper ion-fab-button:active,
+.zoom-out-btn-wrapper ion-fab-button:active,
+.download-map-btn-wrapper ion-fab-button:active,
+.edit-mode-btn-wrapper ion-fab-button:active,
+.locate-btn-wrapper ion-fab-button:active,
+.clear-btn-wrapper ion-fab-button:active,
+.map-layer-controls ion-fab-button:active {
+  transform: scale(0.94);
+}
+
+.action-btn {
+  appearance: none;
+  padding: 0;
+  border: 1px solid rgba(255, 255, 255, 0.28);
+  box-shadow: 0 6px 16px rgba(0, 0, 0, 0.32), inset 0 1px 0 rgba(255, 255, 255, 0.18);
+  -webkit-tap-highlight-color: transparent;
+  touch-action: manipulation;
+  width: 48px;
+  height: 48px;
+  right: 16px;
+
+  &:active {
+    transform: scale(0.94);
+  }
+
+  &:focus-visible {
+    outline: 3px solid #fff;
+    outline-offset: 3px;
+  }
+
+  ion-icon {
+    pointer-events: none;
+  }
+}
+
+@media (max-width: 360px) {
+  .gps-panel {
+    left: 6px;
+    right: 6px;
+    padding-inline: 7px;
+  }
+
+  .gps-panel .row {
+    gap: 5px;
+  }
+
+  .gps-panel .label {
+    font-size: 9px;
+  }
+
+  .coordinates-row .value {
+    font-size: 11px;
+  }
+
+  .gps-status {
+    font-size: 10px;
+    padding: 4px 6px;
+  }
+}
+
+@media (max-height: 700px) {
+  .zoom-extend-btn-wrapper {
+    top: 8px;
+  }
+
+  .zoom-in-btn-wrapper {
+    top: 52px;
+  }
+
+  .zoom-out-btn-wrapper {
+    top: 96px;
+  }
+
+  .download-map-btn-wrapper {
+    top: 140px;
+  }
+
+  .edit-mode-btn-wrapper {
+    top: 184px;
+  }
+
+  .locate-btn-wrapper {
+    bottom: calc(205px + env(safe-area-inset-bottom));
+  }
+
+  .clear-btn-wrapper {
+    bottom: calc(157px + env(safe-area-inset-bottom));
+    right: 16px;
+    left: auto;
+  }
+
+  .map-layer-controls {
+    bottom: calc(190px + env(safe-area-inset-bottom));
+  }
+
+  .draw-walk-btn {
+    bottom: 255px;
+  }
+
+  .draw-line-btn {
+    bottom: 305px;
+  }
+
+  .add-point-btn,
+  .add-vertex-btn {
+    bottom: 355px;
   }
 }

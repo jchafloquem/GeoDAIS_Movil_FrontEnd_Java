@@ -145,7 +145,6 @@ export class MapaPage implements OnDestroy {
   private pulseInterval: any = null;
   private peruLayer: any | null = null;
   private drawnItems: any | null = null; // FeatureGroup para elementos dibujados
-  private locationWatchId: string | null = null;
   private satelliteLayer: any | null = null;
   private lightLayer: any | null = null;
   private vertexMarkers: any | null = null;
@@ -157,7 +156,7 @@ export class MapaPage implements OnDestroy {
   private polygonVertices: any[] = [];
 
   public isLoading = false;
-  public gpsData: any = {
+  public gpsData: GpsData = {
     lat: null,
     lng: null,
     alt: null,
@@ -213,7 +212,7 @@ export class MapaPage implements OnDestroy {
    */
   public getGpsAccuracyClass(): string {
     const accH = this.gpsData.accH;
-    if (accH === null || accH > 10) {
+    if (accH === null || accH > 15) {
       return 'gps-bad'; // Mala precisión (rojo)
     }
     if (accH > 5) {
@@ -229,12 +228,13 @@ export class MapaPage implements OnDestroy {
 
   ionViewDidEnter() {
     this.initializeNetworkListener();
-    this.gpsAcquisitionService.startGpsWatch();
 
-    // Nos suscribimos a los datos del GPS para actualizar el panel
+    this.gpsSubscription?.unsubscribe();
     this.gpsSubscription = this.gpsDataService.currentGpsData.subscribe((data: GpsData) => {
       this.gpsData = data;
+      this.updateUserLocationMarker();
     });
+    void this.gpsAcquisitionService.startGpsWatch();
 
     // Muestra un spinner inicial durante 5 segundos por estética
     setTimeout(() => {
@@ -267,9 +267,6 @@ export class MapaPage implements OnDestroy {
       this.gpsSubscription.unsubscribe();
     }
 
-    if (this.locationWatchId) {
-      Geolocation.clearWatch({ id: this.locationWatchId });
-    }
     if (this.watchId) {
       Geolocation.clearWatch({ id: this.watchId });
     }
@@ -561,7 +558,7 @@ export class MapaPage implements OnDestroy {
 
   private async startDrawingByWalking() {
     // Si no tenemos una ubicación GPS inicial, no podemos empezar a dibujar.
-    if (!this.gpsData.lat) {
+    if (this.gpsData.lat === null || this.gpsData.lng === null) {
       // Revertimos el estado del botón para que el usuario pueda intentarlo de nuevo.
       this.isDrawingPolygon = false;
       return;
@@ -730,7 +727,7 @@ export class MapaPage implements OnDestroy {
       return;
     }
 
-    if (!this.gpsData.lat) {
+    if (this.gpsData.lat === null || this.gpsData.lng === null) {
       this.registerDataService.showToast('Ubicación GPS no disponible. Intente centrar el mapa primero.', 'warning', 'top');
       return;
     }
@@ -1179,50 +1176,6 @@ export class MapaPage implements OnDestroy {
     this.legendDataService.updateCounts(counts);
   }
 
-  private async startLocationWatch() {
-  try {
-    this.locationWatchId = await Geolocation.watchPosition({
-      enableHighAccuracy: true,
-      timeout: 10000, // Reducido para consistencia
-      maximumAge: 0
-    }, (position, err) => {
-
-      if (err) {
-        console.error("Error en watchPosition:", err);
-        return;
-      }
-
-      if (position) {
-        const accuracy = position.coords.accuracy;
-
-        this.zone.run(() => {
-          const { latitude, longitude, altitude, altitudeAccuracy, speed } = position.coords;
-
-          // La actualización de gpsData y el servicio gpsDataService ahora se maneja
-          // directamente en GpsAcquisitionService, que ya incluye los filtros de
-          // precisión y velocidad. Aquí solo nos preocupamos de la parte visual.
-
-          // 2. Movemos el marcador SIEMPRE (para que no parezca que "no funciona")
-          if (this.userCircle && this.pulseCircle) {
-            const newLatLng = L.latLng(latitude, longitude);
-            this.userCircle.setLatLng(newLatLng);
-            this.pulseCircle.setLatLng(newLatLng);
-
-          }
-        });
-      }
-    });
-  } catch (error) {
-    console.error("Error al iniciar startLocationWatch:", error);
-    this.registerDataService.showToast(
-      'No se pudo iniciar el seguimiento GPS. Verifique los permisos.',
-      'danger'
-    );
-  }
-}
-
-
-
   /**
    * Acción del botón: Muestra el indicador de carga y centra el mapa en el usuario.
    */
@@ -1238,7 +1191,7 @@ export class MapaPage implements OnDestroy {
 
     try {
       const { lat, lng } = this.gpsData;
-      if (!lat || !lng) {
+      if (lat === null || lng === null) {
         this.registerDataService.showToast('Coordenadas GPS inválidas.', 'warning', 'top');
         this.isLoading = false;
         return;
@@ -1287,7 +1240,7 @@ export class MapaPage implements OnDestroy {
    * Esta función es llamada cada vez que se recibe una nueva coordenada del GPS.
    */
   private updateUserLocationMarker() {
-    if (!this.map || !this.gpsData || !this.gpsData.lat) {
+    if (!this.map || this.gpsData.lat === null || this.gpsData.lng === null) {
       return; // No hacer nada si no hay mapa o datos de GPS
     }
 
@@ -1326,14 +1279,6 @@ export class MapaPage implements OnDestroy {
     if (this.map) {
       return;
     }
-
-    // Suscripción para actualizar el marcador del usuario en el mapa
-    this.gpsDataService.currentGpsData.subscribe(data => {
-      if (data && data.lat && data.lng) {
-        this.gpsData = data; // Actualizamos la variable local para el panel
-        this.updateUserLocationMarker();
-      }
-    });
 
     const map = L.map('map', {
       center: [-9.00, -70.0152],
@@ -1426,9 +1371,7 @@ export class MapaPage implements OnDestroy {
     });
 
     this.map = map;
-
-    // Iniciamos el seguimiento continuo de la ubicación del usuario.
-    this.startLocationWatch(); // RESTAURADO: Se activa tu lógica original de GPS.
+    this.updateUserLocationMarker();
 
     // Cargamos los polígonos guardados en el dispositivo
     this.loadSavedGeometries();

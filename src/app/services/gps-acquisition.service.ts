@@ -10,6 +10,8 @@ import { ToastController } from '@ionic/angular/standalone';
 export class GpsAcquisitionService {
 
   private watchId: string | null = null;
+  private startPromise: Promise<void> | null = null;
+  private generation = 0;
 
   constructor(
     private readonly gpsDataService: GpsDataService,
@@ -18,29 +20,57 @@ export class GpsAcquisitionService {
   ) { }
 
   public async startGpsWatch() {
-    // Evitar iniciar múltiples seguimientos
     if (this.watchId) {
       console.log('[GpsAcquisitionService] El seguimiento GPS ya está activo.');
       return;
     }
 
+    if (this.startPromise) {
+      return this.startPromise;
+    }
+
+    const generation = ++this.generation;
+    const startPromise = this.createGpsWatch(generation);
+    this.startPromise = startPromise;
+
     try {
-      const permissions = await Geolocation.requestPermissions();
-      if (permissions.location !== 'granted' && permissions.coarseLocation !== 'granted') {
-        console.error('El permiso de geolocalización no fue concedido.');
-        this.showToast('No se pudo iniciar el GPS. Se requieren permisos de ubicación.', 'danger');
+      await startPromise;
+    } finally {
+      if (this.startPromise === startPromise) {
+        this.startPromise = null;
+      }
+    }
+  }
+
+  private async createGpsWatch(generation: number): Promise<void> {
+    try {
+      let permissions = await Geolocation.checkPermissions();
+      if (permissions.location !== 'granted') {
+        permissions = await Geolocation.requestPermissions({ permissions: ['location'] });
+      }
+
+      if (permissions.location !== 'granted') {
+        console.error('El permiso de ubicación precisa no fue concedido.');
+        await this.showToast(
+          'Activa la ubicación precisa para GeoMovilDAIS en los permisos de la aplicación.',
+          'danger'
+        );
+        return;
+      }
+
+      if (generation !== this.generation) {
         return;
       }
 
       const options: PositionOptions = {
         enableHighAccuracy: true,
-        timeout: 20000,
-        maximumAge: 5000
+        timeout: 10000,
+        maximumAge: 0,
+        minimumUpdateInterval: 2000
       };
 
       console.log('[GpsAcquisitionService] Iniciando seguimiento GPS (watchPosition)...');
-      this.watchId = await Geolocation.watchPosition(options, (position, err) => {
-        // Usamos NgZone para asegurar que las actualizaciones se propaguen correctamente en Angular
+      const watchId = await Geolocation.watchPosition(options, (position, err) => {
         this.zone.run(() => {
           if (err) {
             console.error('Error al observar la posición del GPS', err);
@@ -56,22 +86,34 @@ export class GpsAcquisitionService {
               accH: position.coords.accuracy ?? null,
               accV: position.coords.altitudeAccuracy ?? null,
             };
-            // Actualiza los datos en tu servicio de estado global
             this.gpsDataService.updateGpsData(gpsData);
           }
         });
       });
 
+      if (generation !== this.generation) {
+        await Geolocation.clearWatch({ id: watchId });
+        return;
+      }
+
+      this.watchId = watchId;
     } catch (e) {
       console.error('Error al iniciar el seguimiento del GPS', e);
-      this.showToast('Error al iniciar el servicio de GPS.', 'danger');
+      const detail = e instanceof Error ? e.message : 'Error desconocido';
+      await this.showToast(`Error al iniciar el servicio de GPS: ${detail}`, 'danger');
     }
   }
 
   public stopGpsWatch() {
+    this.generation++;
+    this.startPromise = null;
+
     if (this.watchId) {
-      Geolocation.clearWatch({ id: this.watchId });
+      const watchId = this.watchId;
       this.watchId = null;
+      void Geolocation.clearWatch({ id: watchId }).catch(error => {
+        console.error('Error al detener el seguimiento del GPS', error);
+      });
       console.log('[GpsAcquisitionService] Seguimiento GPS detenido.');
     }
   }

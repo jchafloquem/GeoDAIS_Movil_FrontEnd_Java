@@ -74,12 +74,12 @@
         <ion-button fill="clear" class="network-status-button">
           <ion-icon slot="icon-only" name="cellular-outline" [color]="isOnline ? 'success' : 'danger'" title="Estado de la conexión" [class.status-changed]="networkStatusChanged"></ion-icon>
         </ion-button>
+        <span class="app-version">V1.0.0</span>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>
   <ion-content>
     <div id="map"></div>
-    <div class="app-version">v1.0.0</div>
     <app-legend></app-legend>
     <!-- Spinner de carga inicial -->
     <div class="initial-spinner-container" *ngIf="showInitialSpinner">
@@ -132,11 +132,11 @@
       <div class="row">
         <div class="cell">
           <span class="label">Pres. Horizontal</span>
-          <span class="value">{{ gpsData.accH | number:'1.4-4' }}</span>
+          <span class="value">{{ gpsData.accH !== null ? (gpsData.accH | number:'1.0-0') + ' m' : '—' }}</span>
         </div>
         <div class="cell">
           <span class="label">Pres. Vertical</span>
-          <span class="value">{{ gpsData.accV | number:'1.4-4' }}</span>
+          <span class="value">{{ gpsData.accV !== null ? (gpsData.accV | number:'1.0-0') + ' m' : '—' }}</span>
         </div>
       </div>
     </div>

@@ -1,26 +1,244 @@
-ion-content {
-  // Mantenemos la protección automática del sistema
-  --ion-safe-area-top: env(safe-area-inset-top);
-
-  .main-wrapper {
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: flex-start;
-    min-height: 100%;
-
-    /* Calculamos: El espacio de la cámara (notch) + 50px de margen extra.
-       Esto garantiza que en teléfonos con o sin notch, siempre baje 50px
-       desde donde termina la zona prohibida.
-    */
-    padding-top: calc(var(--ion-safe-area-top) + 50px);
-  }
+:host {
+  display: block;
+  height: 100%;
 }
 
-.logo-container {
-    width: 100%;
-    display: flex;
-    justify-content: center;
-    // Quitamos márgenes internos para que el control sea exacto desde el wrapper
-    padding: 0;
+.welcome-content {
+  --background: #073d2c;
+}
+
+.welcome-page {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-sizing: border-box;
+  min-height: 100%;
+  min-height: 100dvh;
+  padding: max(40px, calc(env(safe-area-inset-top) + 18px)) 24px max(22px, env(safe-area-inset-bottom));
+  overflow: hidden;
+  isolation: isolate;
+  background:
+    radial-gradient(ellipse at 90% 16%, rgba(27, 126, 72, 0.55), transparent 38%),
+    radial-gradient(ellipse at 0% 100%, rgba(13, 155, 115, 0.24), transparent 42%),
+    linear-gradient(155deg, #062f24 0%, #07432f 54%, #063527 100%);
+}
+
+.welcome-page::before,
+.welcome-page::after {
+  position: absolute;
+  z-index: -1;
+  border: 1px solid rgba(197, 245, 137, 0.12);
+  border-radius: 50%;
+  content: '';
+  pointer-events: none;
+}
+
+.welcome-page::before {
+  top: 15%;
+  right: -118px;
+  width: 250px;
+  height: 250px;
+}
+
+.welcome-page::after {
+  bottom: 8%;
+  left: -168px;
+  width: 300px;
+  height: 300px;
+}
+
+.brand {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+}
+
+.brand-logo {
+  width: min(170px, 45vw);
+  padding: 6px 12px;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.welcome-hero {
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  padding: 16px 0 18px;
+  text-align: center;
+}
+
+.hero-illustration {
+  position: relative;
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  max-width: 360px;
+  max-height: 32vh;
+  margin-bottom: 18px;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.82);
+  border-radius: 32px;
+  background: linear-gradient(145deg, #f8f8e8, #e6f6dd);
+  box-shadow:
+    0 22px 48px rgba(0, 0, 0, 0.24),
+    0 0 0 7px rgba(255, 255, 255, 0.07);
+}
+
+.hero-illustration ion-img {
+  width: min(100%, 340px);
+  height: 100%;
+  object-fit: contain;
+}
+
+.welcome-copy {
+  width: 100%;
+  max-width: 390px;
+}
+
+.eyebrow {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 10px;
+  color: #c7f58c;
+  font-size: 0.7rem;
+  font-weight: 750;
+  letter-spacing: 0.16em;
+}
+
+.eyebrow::before,
+.eyebrow::after {
+  width: 18px;
+  height: 1px;
+  background: rgba(199, 245, 140, 0.62);
+  content: '';
+}
+
+.welcome-copy h1 {
+  margin: 0;
+  color: #fff;
+  font-size: clamp(1.8rem, 7.5vw, 2.35rem);
+  font-weight: 760;
+  letter-spacing: -0.045em;
+  line-height: 1.08;
+}
+
+.welcome-copy h1 span {
+  color: #c7f58c;
+}
+
+.welcome-copy p {
+  max-width: 350px;
+  margin: 13px auto 0;
+  color: rgba(239, 248, 241, 0.78);
+  font-size: 0.94rem;
+  line-height: 1.55;
+}
+
+.feature-tags {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: 9px;
+  width: 100%;
+  margin: 0 0 17px;
+}
+
+.feature-tags span {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  padding: 9px 13px;
+  border: 1px solid rgba(226, 248, 224, 0.17);
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.09);
+  color: #f0f7f1;
+  font-size: 0.75rem;
+  font-weight: 600;
+  backdrop-filter: blur(8px);
+}
+
+.feature-tags i {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: #c7f58c;
+  box-shadow: 0 0 10px rgba(199, 245, 140, 0.65);
+}
+
+.welcome-actions {
+  width: 100%;
+  max-width: 390px;
+}
+
+.welcome-actions ion-button {
+  height: 50px;
+  margin: 0;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
+}
+
+.login-button {
+  --background: #c7f58c;
+  --background-activated: #b1e676;
+  --background-hover: #b1e676;
+  --color: #123c27;
+  --box-shadow: 0 10px 26px rgba(0, 0, 0, 0.2);
+  margin-bottom: 10px !important;
+}
+
+.register-button {
+  --border-color: rgba(233, 248, 238, 0.55);
+  --border-width: 1.5px;
+  --color: #fff;
+  --background: rgba(255, 255, 255, 0.04);
+}
+
+.app-version {
+  margin: 15px 0 0;
+  color: rgba(232, 245, 235, 0.58);
+  font-size: 0.72rem;
+  text-align: center;
+}
+
+.app-version span {
+  padding: 0 3px;
+  color: #c7f58c;
+}
+
+@media (max-height: 700px) {
+  .welcome-page {
+    padding-top: max(28px, calc(env(safe-area-inset-top) + 12px));
+    padding-bottom: max(14px, env(safe-area-inset-bottom));
+  }
+
+  .brand-logo {
+    width: min(145px, 40vw);
+  }
+
+  .hero-illustration {
+    max-height: 31vh;
+    margin-bottom: 15px;
+    border-radius: 26px;
+  }
+
+  .welcome-hero {
+    padding: 10px 0 12px;
+  }
+
+  .feature-tags {
+    margin-bottom: 15px;
+  }
+
+  .welcome-actions ion-button {
+    height: 48px;
+  }
 }

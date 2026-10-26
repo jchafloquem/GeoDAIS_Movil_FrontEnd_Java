@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { FormBuilder, FormGroup, FormsModule, ReactiveFormsModule, Validators } from '@angular/forms';
 import {
   IonContent,
+  IonImg,
   IonItem,
   IonInput,
   IonButton,
@@ -41,6 +42,7 @@ import { eye, eyeOff } from 'ionicons/icons';
     IonCardSubtitle,
     IonCardTitle,
     IonContent,
+    IonImg,
     IonInput,
     IonItem,
     IonIcon,

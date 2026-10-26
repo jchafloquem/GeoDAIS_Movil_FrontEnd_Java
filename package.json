@@ -10,7 +10,8 @@
     "watch": "ng build --watch --configuration development",
     "test": "ng test",
     "lint": "ng lint",
-    "build:android": "npm run build && npx cap sync android"
+    "build:android": "npm run build && npx cap sync android",
+    "postinstall": "node patch-proguard.js"
   },
   "private": true,
   "dependencies": {

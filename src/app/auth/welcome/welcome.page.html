@@ -1,58 +1,55 @@
-<ion-content [fullscreen]="true" class="ion-padding">
-  <div class="main-wrapper">
-    <div class="logo-container">
+<ion-content [fullscreen]="true" class="welcome-content">
+  <main class="welcome-page">
+    <header class="brand">
       <ion-img
+        class="brand-logo"
         src="/assets/img/logoapp.png"
-        alt="Logo DEVIDA"
-        style="max-width: 180px"
+        alt="GeoDAIS"
       ></ion-img>
-    </div>
-    <div class="welcome-image-container" style="margin-bottom: 20px">
-      <ion-img
-        src="/assets/img/welcome.png"
-        alt="Imagen DEVIDA"
-        style="max-width: 250px"
-      ></ion-img>
+    </header>
+
+    <section class="welcome-hero" aria-labelledby="welcome-title">
+      <div class="hero-illustration">
+        <ion-img
+          src="/assets/img/welcome.png"
+          alt="Profesional registrando información de campo en un mapa"
+        ></ion-img>
+      </div>
+
+      <div class="welcome-copy">
+        <span class="eyebrow">GESTIÓN EN CAMPO</span>
+        <h1 id="welcome-title">Tu trabajo de campo, <span>más simple</span></h1>
+        <p>
+          Registra información y evidencias desde tu dispositivo móvil, de
+          forma ágil, precisa y organizada.
+        </p>
+      </div>
+    </section>
+
+    <div class="feature-tags" aria-label="Funciones de GeoDAIS">
+      <span><i aria-hidden="true"></i>Ubicación precisa</span>
+      <span><i aria-hidden="true"></i>Datos organizados</span>
     </div>
 
-    <p
-      style="
-        text-align: justify;
-        margin-bottom: 15px;
-        width: 100%;
-        font-size: 0.85em;
-        padding-left: 20px;
-        padding-right: 20px;
-      "
-    >
-      Realiza el levantamiento de información en campo directamente desde tu
-      celular, registrando datos y evidencias en tiempo real de manera ágil,
-      precisa y organizada.
-    </p>
-    <p
-      style="
-        text-align: center;
-        margin-bottom: 20px;
-        width: 100%;
-        font-size: 0.7em;
-      "
-    >
-      v1.0.0 - 30/11/2026
-    </p>
-    <div>
+    <footer class="welcome-actions">
       <ion-button
+        class="login-button"
+        routerLink="/login"
+        expand="block"
+        shape="round"
+      >
+        Iniciar sesión
+      </ion-button>
+      <ion-button
+        class="register-button"
         routerLink="/register"
+        expand="block"
         shape="round"
         fill="outline"
-        style="width: 100%; height: 50px; --border-color: #0DA642; --border-width: 2px; color: #0DA642;">
-        Registrarse en el aplicativo
+      >
+        Registrar en el GeoDAIS
       </ion-button>
-      <ion-button
-        routerLink="/login"
-        shape="round"
-        style="width: 100%; border-radius: 200px; height: 50px;">
-        Iniciar Sesión
-      </ion-button>
-    </div>
-  </div>
+      <p class="app-version">GeoDAIS <span>·</span> v1.0.0</p>
+    </footer>
+  </main>
 </ion-content>

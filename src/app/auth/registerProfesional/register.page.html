@@ -11,11 +11,15 @@
 
 <ion-content [fullscreen]="true">
   <div class="register-container">
-    <ion-card style="border-radius: 25px; overflow: hidden; box-shadow: 0 10px 25px rgba(0,0,0,0.30);">
-      <ion-card-header>
+    <ion-card class="profile-card">
+      <ion-card-header class="profile-card-header">
+        <span class="profile-eyebrow">GEO DAIS</span>
         <ion-card-title class="ion-text-center">
           {{ isProfileRegistered ? 'DATOS DEL USUARIO' : 'COMPLETA TU PERFIL' }}
         </ion-card-title>
+        <p class="profile-intro">
+          {{ isProfileRegistered ? 'Información de tu cuenta' : 'Ingresa tus datos para comenzar' }}
+        </p>
       </ion-card-header>
 
       <ion-card-content>
@@ -96,7 +100,7 @@
 
           <ion-button
             *ngIf="!isProfileRegistered"
-            style="height: 50px; width: 90%; margin: 20px auto"
+            class="profile-submit"
             expand="block"
             shape="round"
             type="submit"
@@ -108,7 +112,7 @@
 
           <ion-button
             *ngIf="isProfileRegistered"
-            style="height: 50px; width: 90%; margin: 20px auto"
+            class="profile-submit"
             expand="block"
             shape="round"
             (click)="goToLogin()"

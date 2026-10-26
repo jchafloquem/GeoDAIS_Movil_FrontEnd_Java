@@ -1,46 +1,177 @@
-// Opcional: Darle un fondo a la página para que la tarjeta resalte
-ion-content {
-  --background: url('/assets/img/login.png') no-repeat center center / cover;
+:host {
+  display: block;
+  height: 100%;
 }
+
+ion-content {
+  --background: #073d2c;
+}
+
 .login-container {
+  position: relative;
   display: flex;
+  flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 100%;
-  padding: 20px;
-  background: rgba(0, 0, 0, 0.4);
-
-}
-ion-card {
-  width: 100%;
-  max-width: 450px;
-  margin: 0 20px;
-}
-ion-card.rounded-card {
-  border-radius: 20px;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: blur(5px); /* Efecto de desenfoque para lo que está detrás */
+  box-sizing: border-box;
+  min-height: 100%;
+  min-height: 100dvh;
+  padding: max(28px, calc(env(safe-area-inset-top) + 12px)) 20px max(24px, env(safe-area-inset-bottom));
   overflow: hidden;
+  background:
+    radial-gradient(ellipse at 95% 8%, rgba(27, 126, 72, 0.5), transparent 38%),
+    radial-gradient(ellipse at 0% 100%, rgba(13, 155, 115, 0.2), transparent 42%),
+    linear-gradient(155deg, #062f24 0%, #07432f 54%, #063527 100%);
 }
-@media (min-width: 490px) {
-  ion-card {
-    margin: 0;
-  }
+
+.login-brand {
+  display: flex;
+  justify-content: center;
+  width: 100%;
+  margin-bottom: 28px;
 }
+
+.login-brand ion-img {
+  width: min(180px, 48vw);
+  padding: 6px 12px;
+  border-radius: 15px;
+  background: #fff;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12);
+}
+
+.rounded-card {
+  width: 100%;
+  max-width: 430px;
+  margin: 0;
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.72);
+  border-radius: 26px;
+  background: #f8fbf4;
+  box-shadow: 0 22px 48px rgba(0, 0, 0, 0.25);
+}
+
+.login-card-header {
+  padding: 26px 22px 16px;
+  text-align: center;
+}
+
+.login-eyebrow {
+  display: block;
+  margin-bottom: 9px;
+  color: #0b923a;
+  font-size: 0.68rem;
+  font-weight: 750;
+  letter-spacing: 0.17em;
+}
+
+ion-card-title {
+  color: #183326;
+  font-size: 1.5rem;
+  font-weight: 750;
+  letter-spacing: -0.035em;
+}
+
+ion-card-subtitle {
+  margin-top: 8px;
+  color: #718075;
+  font-size: 0.9rem;
+}
+
+ion-card-content {
+  padding: 8px 22px 24px;
+}
+
+.login-fields {
+  padding: 0;
+  background: transparent;
+}
+
+.login-fields ion-item {
+  --background: #fff;
+  --border-color: #e3ebe1;
+  --highlight-color-focused: #0da642;
+  --min-height: 60px;
+  --padding-start: 14px;
+  --inner-padding-end: 8px;
+  margin-bottom: 11px;
+  overflow: hidden;
+  border: 1px solid #e3ebe1;
+  border-radius: 14px;
+  box-shadow: 0 2px 7px rgba(24, 51, 38, 0.035);
+}
+
+.login-fields ion-item::part(native) {
+  border: 0;
+}
+
+.login-fields ion-input {
+  --color: #183326;
+  --placeholder-color: #9aa69d;
+  --placeholder-opacity: 1;
+  font-size: 0.94rem;
+}
+
+.password-toggle {
+  --color: #617066;
+  --padding-start: 10px;
+  --padding-end: 8px;
+  margin-top: 14px;
+}
+
+.password-toggle ion-icon {
+  font-size: 21px;
+}
+
 .login-button {
-  --background: #0DA642;
-  --background-activated: #0b8e38;
-  --background-hover: #0b8e38;
-  height: 48px;
-  font-size: 1rem;
-  font-weight: bold;
+  --background: #0da642;
+  --background-activated: #0b923a;
+  --background-hover: #0b923a;
+  --border-radius: 999px;
+  --box-shadow: 0 8px 18px rgba(13, 166, 66, 0.2);
+  height: 52px;
+  margin-top: 12px;
+  font-size: 0.95rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  text-transform: none;
 }
 
-ion-item {
-  --padding-start: 8px;
-  --inner-padding-end: 0; // Permite que el botón del ojo llegue bien al borde
+.login-button[disabled] {
+  --background: #9fbda8;
+  --box-shadow: none;
+  opacity: 0.72;
+}
 
-  ion-button {
-    margin-top: 15px; // Alinea el ojo con el texto del input cuando la etiqueta flota
+@media (max-height: 700px) {
+  .login-container {
+    padding-top: max(18px, calc(env(safe-area-inset-top) + 8px));
+    padding-bottom: max(16px, env(safe-area-inset-bottom));
+  }
+
+  .login-brand {
+    margin-bottom: 16px;
+  }
+
+  .login-brand ion-img {
+    width: min(150px, 42vw);
+  }
+
+  .login-card-header {
+    padding-top: 19px;
+    padding-bottom: 11px;
+  }
+
+  ion-card-content {
+    padding: 5px 18px 18px;
+  }
+
+  .login-fields ion-item {
+    --min-height: 54px;
+    margin-bottom: 8px;
+  }
+
+  .login-button {
+    height: 48px;
+    margin-top: 8px;
   }
 }

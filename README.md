@@ -15,6 +15,9 @@ Aplicacion Móvil de la Sub Direccion de Monitoreo
 - Leaflet 1.9.4
 - Capacitor 7.4.3
 
+## Arquitectura
+- [Diagrama de arquitectura y flujos principales](./docs/arquitectura.md)
+
 ## ⚙️ Instalación
 ```bash
 git clone https://github.com/usuario/repositorio.git
@@ -27,4 +30,3 @@ npx cap sync android
 npx cap open android
 npx cap run android
 ionic cap run android -l --external
-

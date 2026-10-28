@@ -64,7 +64,7 @@
         <ion-menu-button></ion-menu-button>
       </ion-buttons>
       <ion-title>
-        <ion-icon name="map-outline" aria-hidden="true"></ion-icon>
+        <ion-icon class="map-brand-icon" name="map-outline" aria-hidden="true"></ion-icon>
         GeoDAIS
       </ion-title>
       <ion-buttons slot="end">
@@ -167,11 +167,6 @@
         <ion-icon name="create-outline"></ion-icon>
       </ion-fab-button>
     </ion-fab>
-    <ion-fab class="clear-btn-wrapper" slot="fixed" vertical="top" horizontal="start">
-      <ion-fab-button (click)="resetUserLocation()" aria-label="Limpiar marcador GPS" title="Limpiar marcador GPS">
-        <ion-icon name="trash-outline"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
     <ion-fab class="zoom-extend-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
       <ion-fab-button (click)="zoomToPeru()" aria-label="Ver todo el Perú" title="Ver todo el Perú">
         <ion-icon name="globe-outline"></ion-icon>
@@ -184,22 +179,22 @@
       </ion-fab-button>
     </ion-fab>
 
-    <!-- Botones de acción (estilo manual) -->
-    <!-- Botón para añadir un vértice mientras se dibuja -->
-    <button *ngIf="isDrawingPolygon || isDrawingLine" type="button" class="action-btn add-vertex-btn" (click)="addPolygonPoint()" title="Añadir vértice" aria-label="Añadir vértice">
-      <ion-icon name="add-circle-outline"></ion-icon>
-    </button>
-    <!-- Botón para iniciar/detener el dibujo de LÍNEA -->
-    <button *ngIf="canDrawLines && !isDrawingPolygon" type="button" class="action-btn draw-line-btn" (click)="toggleLineDrawing()" [class.active]="isDrawingLine" [attr.aria-label]="isDrawingLine ? 'Detener dibujo de línea' : 'Dibujar línea caminando'" [attr.aria-pressed]="isDrawingLine">
-      <ion-icon [name]="isDrawingLine ? 'stop-circle-outline' : 'analytics-outline'"></ion-icon>
-    </button>
-    <!-- Botón para iniciar/detener el dibujo de POLÍGONO -->
-    <button *ngIf="canDrawPolygons && !isDrawingLine" type="button" class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" [attr.aria-label]="isDrawingPolygon ? 'Detener dibujo de polígono' : 'Dibujar polígono caminando'" [attr.aria-pressed]="isDrawingPolygon">
-      <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
-    </button>
-    <!-- Botón para añadir un PUNTO en la ubicación actual (se oculta durante el dibujo) -->
-    <button *ngIf="canDrawPoints && !isDrawingPolygon && !isDrawingLine" type="button" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir punto en mi ubicación" aria-label="Añadir punto en mi ubicación">
-      <ion-icon name="location-outline"></ion-icon>
-    </button>
+    <div slot="fixed" class="map-drawing-controls" role="group" aria-label="Herramientas del mapa">
+      <button type="button" class="action-btn clear-location-btn" (click)="resetUserLocation()" title="Limpiar marcador GPS" aria-label="Limpiar marcador GPS">
+        <ion-icon name="trash-outline"></ion-icon>
+      </button>
+      <button *ngIf="canDrawPolygons && !isDrawingLine" type="button" class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" [attr.aria-label]="isDrawingPolygon ? 'Detener dibujo de polígono' : 'Dibujar polígono caminando'" [attr.aria-pressed]="isDrawingPolygon">
+        <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
+      </button>
+      <button *ngIf="canDrawLines && !isDrawingPolygon" type="button" class="action-btn draw-line-btn" (click)="toggleLineDrawing()" [class.active]="isDrawingLine" [attr.aria-label]="isDrawingLine ? 'Detener dibujo de línea' : 'Dibujar línea caminando'" [attr.aria-pressed]="isDrawingLine">
+        <ion-icon [name]="isDrawingLine ? 'stop-circle-outline' : 'analytics-outline'"></ion-icon>
+      </button>
+      <button *ngIf="canDrawPoints && !isDrawingPolygon && !isDrawingLine" type="button" class="action-btn add-point-btn" (click)="addPointAtCurrentLocation()" title="Añadir punto en mi ubicación" aria-label="Añadir punto en mi ubicación">
+        <ion-icon name="location-outline"></ion-icon>
+      </button>
+      <button *ngIf="isDrawingPolygon || isDrawingLine" type="button" class="action-btn add-vertex-btn" (click)="addPolygonPoint()" title="Añadir vértice" aria-label="Añadir vértice">
+        <ion-icon name="add-circle-outline"></ion-icon>
+      </button>
+    </div>
   </ion-content>
 </div>

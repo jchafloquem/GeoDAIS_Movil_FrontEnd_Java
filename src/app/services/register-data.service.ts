@@ -12,7 +12,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
-import { GPS_ACCURACY_THRESHOLDS, GpsDataService, isValidGpsAccuracy } from './gps-data.service';
+import { GpsDataService, isValidGpsAccuracy } from './gps-data.service';
 import { GpsAcquisitionService } from './gps-acquisition.service';
 
 // Reutilizamos la interfaz de propiedades
@@ -1081,31 +1081,13 @@ export class RegisterDataService {
         return;
       }
 
-      const image = await Camera.getPhoto({
-        quality: 90, allowEditing: false, resultType: CameraResultType.Base64, source: CameraSource.Camera
-      });
-      if (!image.base64String) return;
+      console.log('[RegisterDataService] takePicture: Obteniendo coordenadas GPS para la foto...');
+      loading.message = 'Obteniendo las coordenadas GPS (hasta 3 s)...';
+      const position = await this.gpsAcquisitionService.getBestPositionForCapture();
 
-      // --- INICIO: LÓGICA DE GEOLOCALIZACIÓN ROBUSTA ---
-      let position;
-      try {
-        console.log('[RegisterDataService] takePicture: Buscando la mejor precisión GPS H/V...');
-        loading.message = 'Midiendo precisión GPS H/V (hasta 3 s). Mantén el móvil quieto y al aire libre...';
-        position = await this.gpsAcquisitionService.getBestPositionForCapture();
-
-        const horizontalAccuracy = position.coords.accuracy;
-        if (!isValidGpsAccuracy(horizontalAccuracy)) {
-          throw new Error('El GPS no reportó una precisión horizontal válida.');
-        }
-        if (horizontalAccuracy > GPS_ACCURACY_THRESHOLDS.photo) {
-          throw new Error(`La mejor precisión horizontal obtenida fue ${horizontalAccuracy.toFixed(1)} m. Salga a un espacio abierto, mantenga el teléfono quieto e intente de nuevo.`);
-        }
-
-      } catch (error: any) {
-        // Si aún así falla, lanzamos el error para que sea manejado por el bloque catch principal.
-        throw error;
+      if (!isValidGpsAccuracy(position.coords.accuracy)) {
+        throw new Error('El GPS no reportó una precisión horizontal válida.');
       }
-      // --- FIN: LÓGICA DE GEOLOCALIZACIÓN ROBUSTA ---
 
       if (!isValidGpsAccuracy(position.coords.altitudeAccuracy)) {
         await this.showToast(
@@ -1115,6 +1097,11 @@ export class RegisterDataService {
           5000
         );
       }
+
+      const image = await Camera.getPhoto({
+        quality: 90, allowEditing: false, resultType: CameraResultType.Base64, source: CameraSource.Camera
+      });
+      if (!image.base64String) return;
 
       const coords = position.coords;
       if (

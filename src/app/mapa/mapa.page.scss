@@ -842,3 +842,9 @@ ion-toolbar ion-buttons[slot="end"] {
     top: 184px;
   }
 }
+
+ion-toolbar ion-title{--padding-start:0;--padding-end:0;width:100%}
+ion-toolbar .map-title{display:flex;align-items:center;justify-content:space-between;gap:12px;width:100%;padding-inline:4px}
+ion-toolbar .map-title .map-brand-name{font-weight:700;font-size:1.05rem;letter-spacing:.02em;color:var(--ion-color-primary-contrast,#fff)}
+ion-toolbar .map-title .app-version{font-weight:500;font-size:.75rem;padding:2px 8px;border-radius:999px;background:rgba(255,255,255,.18);color:var(--ion-color-primary-contrast,#fff);white-space:nowrap}
+

@@ -52,8 +52,7 @@ import {
   stopCircleOutline,
   trashOutline,
   walkOutline,
-  wifiOutline,
-} from 'ionicons/icons';
+  wifiOutline, locateOutline } from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
 import { Geolocation, Position } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
@@ -64,7 +63,6 @@ import { Network } from '@capacitor/network';
 import { Device } from '@capacitor/device';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 import {
-  GPS_ACCURACY_THRESHOLDS,
   getGpsAccuracyQuality,
   GpsData,
   GpsDataService,
@@ -212,7 +210,7 @@ export class MapaPage implements OnDestroy {
     private loadingController: LoadingController,
     private legendDataService: LegendDataService
   ) {
-    addIcons({personAddOutline,listOutline,cloudUploadOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,exitOutline,mapOutline,planetOutline,cellularOutline,imageOutline,layersOutline,addOutline,removeOutline,locate,addCircleOutline,locationOutline,mailOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
+    addIcons({listOutline,cloudUploadOutline,downloadOutline,createOutline,globeOutline,trashOutline,informationCircleOutline,exitOutline,planetOutline,cellularOutline,imageOutline,layersOutline,locate,locateOutline,addOutline,removeOutline,locationOutline,addCircleOutline,personAddOutline,mapOutline,mailOutline,ellipseOutline,walkOutline,stopCircleOutline,checkmarkCircleOutline,shapesOutline,add,analyticsOutline,wifiOutline});
   }
 
   /**
@@ -526,12 +524,10 @@ export class MapaPage implements OnDestroy {
   }
 
   addPolygonPoint() {
-    // --- CONTROL DE PRECISIÓN HORIZONTAL ---
-    // Solo permite añadir un punto si la precisión del GPS es de 10 metros o menos.
     const currentAccuracy = this.drawingAccuracy;
-    if (!isValidGpsAccuracy(currentAccuracy) || currentAccuracy > GPS_ACCURACY_THRESHOLDS.drawing) {
+    if (!isValidGpsAccuracy(currentAccuracy)) {
       this.registerDataService.showToast(
-        `Precisión GPS muy baja (${currentAccuracy?.toFixed(1) || 'N/A'} m). Espere a que sea ≤ ${GPS_ACCURACY_THRESHOLDS.drawing}m.`,
+        'Aún no se ha recibido una precisión GPS válida. Espere la primera lectura e inténtelo de nuevo.',
         'warning',
         'middle'
       );
@@ -588,7 +584,7 @@ export class MapaPage implements OnDestroy {
     this.polygonVertices = [];
     this.vertexMarkers.clearLayers();
     this.fixedPathDistance = 0;
-    this.drawingAccuracy = null;
+    this.drawingAccuracy = this.gpsData.accH;
     if (this.walkingPolyline) {
       this.map.removeLayer(this.walkingPolyline);
     }
@@ -764,7 +760,7 @@ export class MapaPage implements OnDestroy {
       return;
     }
 
-    this.gpsLoadingMessage = 'Midiendo precisión GPS H/V (hasta 3 s). Mantén el móvil quieto y al aire libre...';
+    this.gpsLoadingMessage = 'Obteniendo una lectura GPS reciente; si hace falta, midiendo precisión H/V (hasta 3 s)...';
     this.isLoading = true;
     let position: Position;
     try {

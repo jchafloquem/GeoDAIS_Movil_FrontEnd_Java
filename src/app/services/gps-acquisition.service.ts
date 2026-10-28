@@ -5,6 +5,8 @@ import {
   GpsDataService,
   isBetterHorizontalPosition,
   isBetterVerticalPosition,
+  isGpsCaptureAccurateEnough,
+  isReusableGpsPosition,
   isValidGpsAccuracy,
 } from './gps-data.service';
 import { ToastController } from '@ionic/angular/standalone';
@@ -16,7 +18,10 @@ import { ToastController } from '@ionic/angular/standalone';
 export class GpsAcquisitionService {
 
   private readonly captureDurationMs = 3000;
+  private readonly reusablePositionMaxAgeMs = 1500;
   private watchId: string | null = null;
+  private latestPosition: Position | null = null;
+  private readonly captureListeners = new Set<(position: Position) => void>();
   private startPromise: Promise<void> | null = null;
   private generation = 0;
 
@@ -99,6 +104,8 @@ export class GpsAcquisitionService {
               return;
             }
 
+            this.latestPosition = position;
+            this.captureListeners.forEach(listener => listener(position));
             const gpsData: GpsData = {
               lat: latitude,
               lng: longitude,
@@ -126,6 +133,24 @@ export class GpsAcquisitionService {
   }
 
   public async getBestPositionForCapture(): Promise<Position> {
+    if (this.startPromise) {
+      await this.startPromise;
+    }
+
+    const cachedPosition = this.latestPosition;
+    if (
+      this.watchId &&
+      cachedPosition &&
+      isReusableGpsPosition(cachedPosition, Date.now(), this.reusablePositionMaxAgeMs) &&
+      this.isValidPosition(cachedPosition)
+    ) {
+      return cachedPosition;
+    }
+
+    if (this.watchId) {
+      return this.captureFromActiveWatch();
+    }
+
     let permissions = await Geolocation.checkPermissions();
     if (permissions.location !== 'granted') {
       permissions = await Geolocation.requestPermissions({ permissions: ['location'] });
@@ -160,38 +185,18 @@ export class GpsAcquisitionService {
           watchId = null;
         }
 
-        if (!bestHorizontalPosition) {
+        const position = this.buildCapturePosition(bestHorizontalPosition, bestVerticalPosition);
+        if (!position) {
           reject(lastError ?? new Error('No se recibieron coordenadas GPS válidas en 3 segundos.'));
           return;
         }
-
-        const horizontalCoords = bestHorizontalPosition.coords;
-        const verticalCoords = bestVerticalPosition?.coords;
-        const position: Position = {
-          ...bestHorizontalPosition,
-          coords: {
-            ...horizontalCoords,
-            altitude: verticalCoords ? verticalCoords.altitude : horizontalCoords.altitude,
-            altitudeAccuracy: verticalCoords ? verticalCoords.altitudeAccuracy : null,
-          },
-        };
-        const { latitude, longitude, accuracy, altitude, altitudeAccuracy, speed } = position.coords;
-        const gpsData: GpsData = {
-          lat: latitude,
-          lng: longitude,
-          alt: typeof altitude === 'number' && Number.isFinite(altitude) ? altitude : null,
-          vel: typeof speed === 'number' && Number.isFinite(speed) ? speed : null,
-          accH: accuracy,
-          accV: isValidGpsAccuracy(altitudeAccuracy) ? altitudeAccuracy : null,
-        };
-        this.zone.run(() => this.gpsDataService.updateGpsData(gpsData));
         resolve(position);
       };
 
       const timeoutId = setTimeout(finish, this.captureDurationMs);
       const options: PositionOptions = {
         enableHighAccuracy: true,
-        timeout: 1000,
+        timeout: this.captureDurationMs,
         maximumAge: 0,
         minimumUpdateInterval: 1000,
       };
@@ -212,6 +217,9 @@ export class GpsAcquisitionService {
         if (isBetterVerticalPosition(bestVerticalPosition, position)) {
           bestVerticalPosition = position;
         }
+        if (this.isCaptureAccurateEnough(bestHorizontalPosition, bestVerticalPosition)) {
+          finish();
+        }
       }).then(id => {
         if (settled) {
           clearWatch(id);
@@ -223,6 +231,89 @@ export class GpsAcquisitionService {
         finish();
       });
     });
+  }
+
+  private captureFromActiveWatch(): Promise<Position> {
+    return new Promise<Position>((resolve, reject) => {
+      let bestHorizontalPosition: Position | null = null;
+      let bestVerticalPosition: Position | null = null;
+      let settled = false;
+
+      const finish = () => {
+        if (settled) {
+          return;
+        }
+        settled = true;
+        clearTimeout(timeoutId);
+        this.captureListeners.delete(onPosition);
+
+        const position = this.buildCapturePosition(bestHorizontalPosition, bestVerticalPosition);
+        if (!position) {
+          reject(new Error('No se recibieron coordenadas GPS válidas en 3 segundos.'));
+          return;
+        }
+        resolve(position);
+      };
+
+      const onPosition = (position: Position) => {
+        if (!this.isValidPosition(position)) {
+          return;
+        }
+        if (isBetterHorizontalPosition(bestHorizontalPosition, position)) {
+          bestHorizontalPosition = position;
+        }
+        if (isBetterVerticalPosition(bestVerticalPosition, position)) {
+          bestVerticalPosition = position;
+        }
+        if (this.isCaptureAccurateEnough(bestHorizontalPosition, bestVerticalPosition)) {
+          finish();
+        }
+      };
+
+      const timeoutId = setTimeout(finish, this.captureDurationMs);
+      this.captureListeners.add(onPosition);
+    });
+  }
+
+  private isCaptureAccurateEnough(
+    horizontalPosition: Position | null,
+    verticalPosition: Position | null
+  ): boolean {
+    return isGpsCaptureAccurateEnough(
+      horizontalPosition?.coords.accuracy,
+      verticalPosition?.coords.altitudeAccuracy
+    );
+  }
+
+  private buildCapturePosition(
+    horizontalPosition: Position | null,
+    verticalPosition: Position | null
+  ): Position | null {
+    if (!horizontalPosition) {
+      return null;
+    }
+
+    const horizontalCoords = horizontalPosition.coords;
+    const verticalCoords = verticalPosition?.coords;
+    const position: Position = {
+      ...horizontalPosition,
+      coords: {
+        ...horizontalCoords,
+        altitude: verticalCoords ? verticalCoords.altitude : horizontalCoords.altitude,
+        altitudeAccuracy: verticalCoords ? verticalCoords.altitudeAccuracy : null,
+      },
+    };
+    const { latitude, longitude, accuracy, altitude, altitudeAccuracy, speed } = position.coords;
+    const gpsData: GpsData = {
+      lat: latitude,
+      lng: longitude,
+      alt: typeof altitude === 'number' && Number.isFinite(altitude) ? altitude : null,
+      vel: typeof speed === 'number' && Number.isFinite(speed) ? speed : null,
+      accH: accuracy,
+      accV: isValidGpsAccuracy(altitudeAccuracy) ? altitudeAccuracy : null,
+    };
+    this.zone.run(() => this.gpsDataService.updateGpsData(gpsData));
+    return position;
   }
 
   private isValidPosition(position: Position): boolean {
@@ -239,6 +330,7 @@ export class GpsAcquisitionService {
   public stopGpsWatch() {
     this.generation++;
     this.startPromise = null;
+    this.latestPosition = null;
 
     if (this.watchId) {
       const watchId = this.watchId;

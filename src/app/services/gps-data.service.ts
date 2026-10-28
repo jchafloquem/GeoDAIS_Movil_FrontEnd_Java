@@ -59,6 +59,30 @@ export const GPS_ACCURACY_THRESHOLDS = {
   photo: 15,
 } as const;
 
+export function isReusableGpsPosition(
+  position: GpsPositionSample | null,
+  now: number,
+  maxAgeMs: number
+): boolean {
+  if (!position || !isValidGpsAccuracy(position.coords.accuracy)) {
+    return false;
+  }
+
+  const age = now - position.timestamp;
+  return age >= 0 &&
+    age <= maxAgeMs &&
+    position.coords.accuracy <= GPS_ACCURACY_THRESHOLDS.photo;
+}
+
+export function isGpsCaptureAccurateEnough(
+  horizontalAccuracy: number | null | undefined,
+  verticalAccuracy: number | null | undefined
+): boolean {
+  return isValidGpsAccuracy(horizontalAccuracy) &&
+    horizontalAccuracy <= GPS_ACCURACY_THRESHOLDS.high &&
+    (!isValidGpsAccuracy(verticalAccuracy) || verticalAccuracy <= GPS_ACCURACY_THRESHOLDS.high);
+}
+
 export type GpsAccuracyQuality = 'good' | 'medium' | 'bad';
 
 export function isValidGpsAccuracy(accuracy: number | null | undefined): accuracy is number {

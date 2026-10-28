@@ -64,8 +64,10 @@
         <ion-menu-button></ion-menu-button>
       </ion-buttons>
       <ion-title>
-        <ion-icon class="map-brand-icon" name="map-outline" aria-hidden="true"></ion-icon>
-        GeoDAIS
+        <div class="map-title">
+          <span class="map-brand-name">GeoDAIS</span>
+          <span class="app-version">V1.0.0</span>
+        </div>
       </ion-title>
       <ion-buttons slot="end">
         <ion-button fill="clear" class="skyplot-button" routerLink="/skyplot" title="Ver estado del GPS" aria-label="Ver estado del GPS">
@@ -74,7 +76,6 @@
         <ion-button fill="clear" class="network-status-button" [attr.aria-label]="isOnline ? 'Con conexión' : 'Sin conexión'">
           <ion-icon slot="icon-only" name="cellular-outline" [color]="isOnline ? 'success' : 'danger'" title="Estado de la conexión" [class.status-changed]="networkStatusChanged"></ion-icon>
         </ion-button>
-        <span class="app-version">V1.0.0</span>
       </ion-buttons>
     </ion-toolbar>
   </ion-header>

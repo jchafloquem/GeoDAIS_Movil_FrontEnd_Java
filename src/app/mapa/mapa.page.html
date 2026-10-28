@@ -80,7 +80,6 @@
   </ion-header>
   <ion-content>
     <div id="map"></div>
-    <app-legend></app-legend>
     <!-- Spinner de carga inicial -->
     <div class="initial-spinner-container" *ngIf="showInitialSpinner">
       <ion-spinner name="bubbles" color="light"></ion-spinner>
@@ -95,56 +94,72 @@
       translucent="true"
       backdropDismiss="false">
     </ion-loading>
-    <ion-fab class="map-layer-controls" slot="fixed" vertical="bottom">
-      <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'" aria-label="Vista satelital" title="Vista satelital">
-        <ion-icon name="image-outline"></ion-icon>
-      </ion-fab-button>
-      <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'" aria-label="Vista de calles" title="Vista de calles">
-        <ion-icon name="layers-outline"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
-    <section class="gps-panel" [ngClass]="getGpsAccuracyClass()" aria-label="Estado y datos de ubicación GPS">
-      <div class="gps-panel-header">
-        <span class="gps-panel-title">
-          <ion-icon name="locate-outline" aria-hidden="true"></ion-icon>
-          Ubicación GPS
-        </span>
-        <span class="gps-status" aria-live="polite">
-          <span class="gps-status-dot" aria-hidden="true"></span>
-          {{ getGpsStatusLabel() }}
-        </span>
-      </div>
-      <div class="row coordinates-row">
-        <div class="cell">
-          <span class="label">Latitud</span>
-          <span class="value">{{ gpsData.lat !== null ? (gpsData.lat | number:'1.6-6') : '—' }}</span>
+    <div class="map-bottom-dock" slot="fixed">
+      <div class="map-scale-slot"></div>
+      <div class="map-bottom-toolbar">
+        <app-legend></app-legend>
+        <div class="map-layer-row">
+          <ion-fab class="map-layer-controls">
+            <ion-fab-button (click)="switchLayer('satellite')" [class.active-layer]="activeLayer === 'satellite'" aria-label="Vista satelital" title="Vista satelital">
+              <ion-icon name="image-outline"></ion-icon>
+            </ion-fab-button>
+            <ion-fab-button (click)="switchLayer('streets')" [class.active-layer]="activeLayer === 'streets'" aria-label="Vista de calles" title="Vista de calles">
+              <ion-icon name="layers-outline"></ion-icon>
+            </ion-fab-button>
+          </ion-fab>
         </div>
-        <div class="cell">
-          <span class="label">Longitud</span>
-          <span class="value">{{ gpsData.lng !== null ? (gpsData.lng | number:'1.6-6') : '—' }}</span>
+        <div class="map-location-controls">
+          <button type="button" class="action-btn clear-location-btn" (click)="resetUserLocation()" title="Limpiar marcador GPS" aria-label="Limpiar marcador GPS">
+            <ion-icon name="trash-outline"></ion-icon>
+          </button>
+          <ion-fab class="locate-btn-wrapper">
+            <ion-fab-button (click)="findAndCenterUser()" aria-label="Centrar en mi ubicación" title="Centrar en mi ubicación">
+              <ion-icon name="locate"></ion-icon>
+            </ion-fab-button>
+          </ion-fab>
         </div>
       </div>
-      <div class="row">
-        <div class="cell">
-          <span class="label">Altitud</span>
-          <span class="value">{{ gpsData.alt !== null ? (gpsData.alt | number:'1.0-1') + ' m' : '—' }}</span>
+      <section class="gps-panel" [ngClass]="getGpsAccuracyClass()" aria-label="Estado y datos de ubicación GPS">
+        <div class="gps-panel-header">
+          <span class="gps-panel-title">
+            <ion-icon name="locate-outline" aria-hidden="true"></ion-icon>
+            Ubicación GPS
+          </span>
+          <span class="gps-status" aria-live="polite">
+            <span class="gps-status-dot" aria-hidden="true"></span>
+            {{ getGpsStatusLabel() }}
+          </span>
         </div>
-        <div class="cell">
-          <span class="label">Velocidad</span>
-          <span class="value">{{ gpsData.vel !== null ? (gpsData.vel | number:'1.0-1') + ' m/s' : '—' }}</span>
+        <div class="row coordinates-row">
+          <div class="cell">
+            <span class="label">Latitud</span>
+            <span class="value">{{ gpsData.lat !== null ? (gpsData.lat | number:'1.6-6') : '—' }}</span>
+          </div>
+          <div class="cell">
+            <span class="label">Longitud</span>
+            <span class="value">{{ gpsData.lng !== null ? (gpsData.lng | number:'1.6-6') : '—' }}</span>
+          </div>
         </div>
-      </div>
-      <div class="row gps-accuracy-row">
-        <div class="cell">
-          <span class="label">Precisión H. estimada</span>
-          <span class="value">{{ gpsData.accH !== null ? '± ' + (gpsData.accH | number:'1.1-1') + ' m' : '—' }}</span>
+        <div class="row gps-details-row">
+          <div class="cell">
+            <span class="label">Alt.</span>
+            <span class="value">{{ gpsData.alt !== null ? (gpsData.alt | number:'1.0-1') + ' m' : '—' }}</span>
+          </div>
+          <div class="cell">
+            <span class="label">Vel.</span>
+            <span class="value">{{ gpsData.vel !== null ? (gpsData.vel | number:'1.0-1') + ' m/s' : '—' }}</span>
+          </div>
+          <div class="cell">
+            <span class="label">Prec. H</span>
+            <span class="value">{{ gpsData.accH !== null ? '± ' + (gpsData.accH | number:'1.1-1') + ' m' : '—' }}</span>
+          </div>
+          <div class="cell">
+            <span class="label">Prec. V</span>
+            <span class="value">{{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : 'No informada' }}</span>
+          </div>
         </div>
-        <div class="cell">
-          <span class="label">Precisión V. estimada</span>
-          <span class="value">{{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : 'No informada' }}</span>
-        </div>
-      </div>
-    </section>
+      </section>
+    </div>
     <ion-fab class="zoom-in-btn-wrapper" slot="fixed" vertical="top" horizontal="end">
       <ion-fab-button (click)="zoomIn()" aria-label="Acercar mapa" title="Acercar">
         <ion-icon name="add-outline"></ion-icon>
@@ -173,16 +188,7 @@
       </ion-fab-button>
     </ion-fab>
 
-    <ion-fab class="locate-btn-wrapper" slot="fixed" vertical="bottom" horizontal="end">
-      <ion-fab-button (click)="findAndCenterUser()" aria-label="Centrar en mi ubicación" title="Centrar en mi ubicación">
-        <ion-icon name="locate"></ion-icon>
-      </ion-fab-button>
-    </ion-fab>
-
     <div slot="fixed" class="map-drawing-controls" role="group" aria-label="Herramientas del mapa">
-      <button type="button" class="action-btn clear-location-btn" (click)="resetUserLocation()" title="Limpiar marcador GPS" aria-label="Limpiar marcador GPS">
-        <ion-icon name="trash-outline"></ion-icon>
-      </button>
       <button *ngIf="canDrawPolygons && !isDrawingLine" type="button" class="action-btn draw-walk-btn" (click)="toggleDrawingMode()" [class.active]="isDrawingPolygon" [attr.aria-label]="isDrawingPolygon ? 'Detener dibujo de polígono' : 'Dibujar polígono caminando'" [attr.aria-pressed]="isDrawingPolygon">
         <ion-icon [name]="isDrawingPolygon ? 'stop-circle-outline' : 'walk-outline'"></ion-icon>
       </button>

@@ -29,10 +29,53 @@
   #main-content-map .gps-status-dot,
   #main-content-map .network-status-button ion-icon,
   #main-content-map .action-btn,
-  #main-content-map ion-fab-button {
+  #main-content-map ion-fab-button,
+  #main-content-map .gps-position-cross {
     animation: none !important;
     transition: none !important;
   }
+}
+
+#main-content-map .leaflet-div-icon.gps-position-marker {
+  border: 0;
+  background: transparent;
+}
+
+#main-content-map .gps-position-cross {
+  position: relative;
+  display: block;
+  width: 32px;
+  height: 32px;
+  animation: gps-position-blink 1s ease-in-out infinite;
+}
+
+#main-content-map .gps-position-cross::before,
+#main-content-map .gps-position-cross::after {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  display: block;
+  border: 1px solid #fff;
+  border-radius: 2px;
+  background: #0878ff;
+  box-shadow: 0 0 4px rgba(0, 0, 0, 0.65);
+  content: "";
+  transform: translate(-50%, -50%);
+}
+
+#main-content-map .gps-position-cross::before {
+  width: 28px;
+  height: 5px;
+}
+
+#main-content-map .gps-position-cross::after {
+  width: 5px;
+  height: 28px;
+}
+
+@keyframes gps-position-blink {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.3; }
 }
 
 #main-content-map > ion-header {
@@ -154,8 +197,8 @@
 }
 
 #main-content-map .gps-panel-header {
-  min-height: 34px;
-  padding: 2px 2px 9px;
+  min-height: 24px;
+  padding: 0 2px 3px;
 }
 
 #main-content-map .gps-panel-title {
@@ -163,12 +206,17 @@
 }
 
 #main-content-map .gps-panel .row {
-  min-height: 36px;
-  padding: 8px 3px;
+  min-height: 27px;
+  padding: 3px 2px;
+}
+
+#main-content-map .gps-panel .gps-details-row {
+  min-height: 31px;
+  padding-block: 3px;
 }
 
 #main-content-map .gps-panel .coordinates-row .cell {
-  padding: 7px 9px;
+  padding: 2px 6px;
   border-radius: 10px;
   background: rgba(255, 255, 255, 0.045);
 }

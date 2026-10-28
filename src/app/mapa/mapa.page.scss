@@ -66,15 +66,8 @@ ion-toolbar {
 }
 
 .locate-btn-wrapper {
-  /* Estilos de posicionamiento para el contenedor ion-fab */
-  bottom: 200px;
-  right: 15px;
-  /* Anulamos el margen por defecto de Ionic para un posicionamiento preciso */
-  margin-inline-end: 0;
-  z-index: 1000; /* Asegura que esté sobre el mapa */
   overflow: visible;
 
-  /* Estilos de apariencia para el botón interno */
   ion-fab-button {
     width: 40px;
     height: 40px;
@@ -85,17 +78,12 @@ ion-toolbar {
 }
 
 .gps-panel {
-  position: absolute;
-  bottom: 20px;
-  left: 8px;
-  right: 8px;
   /* Efecto de desenfoque para el fondo */
   backdrop-filter: blur(4px);
   -webkit-backdrop-filter: blur(4px);
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 6px;
   font-size: 13px;
-  z-index: 2000;
   padding: 0;
   box-sizing: border-box;
   overflow: hidden; /* Para que los bordes redondeados se apliquen a las filas */
@@ -336,37 +324,38 @@ ion-toolbar {
   left: 12px;
   z-index: 2003;
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  align-items: flex-start;
   gap: 8px;
 }
 
 // Estilos para los controles de Leaflet y plugins, que requieren ::ng-deep para sobreescribir los estilos globales.
 :host ::ng-deep {
-  /* Deja la escala por encima de la leyenda y del panel GPS. */
-  .leaflet-bottom.leaflet-left {
-    bottom: calc(282px + env(safe-area-inset-bottom));
-    z-index: 2001;
-    left: 4px;
+  .map-scale-slot {
+    display: flex;
+    justify-content: flex-start;
+    pointer-events: auto;
+  }
 
-    .leaflet-control-scale {
-      background: rgba(11, 110, 52, 0.92);
-      border: 1px solid rgba(255, 255, 255, 0.72);
-      border-radius: 6px;
-      padding: 4px 7px;
-      color: white;
-      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
-    }
+  .map-scale-slot .leaflet-control-scale {
+    margin: 0;
+    padding: 4px 7px;
+    border: 1px solid rgba(255, 255, 255, 0.72);
+    border-radius: 6px;
+    background: rgba(11, 110, 52, 0.92);
+    color: white;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
+  }
 
-    .leaflet-control-scale-line {
-      background-color: transparent;
-      border-color: rgba(255, 255, 255, 0.95);
-      box-shadow: none;
-      color: white;
-      font-size: 11px;
-      font-weight: 700;
-      line-height: 1.3;
-      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
-    }
+  .map-scale-slot .leaflet-control-scale-line {
+    background-color: transparent;
+    border-color: rgba(255, 255, 255, 0.95);
+    box-shadow: none;
+    color: white;
+    font-size: 11px;
+    font-weight: 700;
+    line-height: 1.3;
+    text-shadow: 0 1px 2px rgba(0, 0, 0, 0.7);
   }
 
   /* Estilos para que el buscador se parezca a los botones de zoom */
@@ -437,11 +426,6 @@ ion-toolbar {
 
 }
 
-@media (max-height: 700px) {
-  :host ::ng-deep .leaflet-bottom.leaflet-left {
-    bottom: calc(255px + env(safe-area-inset-bottom));
-  }
-}
 ion-toolbar ion-buttons[slot="end"] {
   .skyplot-button {
     --color: #fff;
@@ -515,12 +499,60 @@ ion-toolbar ion-buttons[slot="end"] {
   right: 12px;
 }
 
-.gps-panel {
+.map-bottom-dock {
+  position: absolute;
+  right: 10px;
   bottom: env(safe-area-inset-bottom);
   left: 10px;
-  right: 10px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  z-index: 2002;
+  pointer-events: none;
+}
+
+.map-bottom-toolbar {
+  display: grid;
+  grid-template-columns: 108px minmax(0, 1fr) 40px;
+  align-items: center;
+  gap: 6px;
+  pointer-events: auto;
+}
+
+.map-bottom-toolbar app-legend {
+  display: block;
+  width: 108px;
+}
+
+.map-layer-row {
+  display: flex;
+  align-self: end;
+  justify-content: center;
+  min-width: 0;
+  pointer-events: auto;
+}
+
+.map-location-controls {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+
+.map-location-controls .clear-location-btn {
+  width: 40px;
+  height: 40px;
+  border-radius: 14px;
+}
+
+.gps-panel {
+  position: relative;
+  bottom: auto;
+  left: auto;
+  right: auto;
+  width: 100%;
   z-index: 2001;
-  padding: 8px 10px 4px;
+  padding: 5px 9px 2px;
   color: #f8fafc;
   background: rgba(15, 23, 32, 0.94);
   border: 1px solid rgba(255, 255, 255, 0.16);
@@ -539,8 +571,8 @@ ion-toolbar ion-buttons[slot="end"] {
   align-items: center;
   justify-content: space-between;
   gap: 8px;
-  min-height: 28px;
-  padding: 0 2px 6px;
+  min-height: 24px;
+  padding: 0 2px 3px;
 }
 
 .gps-panel-title {
@@ -620,15 +652,39 @@ ion-toolbar ion-buttons[slot="end"] {
 .gps-panel .row:nth-child(odd),
 .gps-panel .row:nth-child(even) {
   gap: 10px;
-  min-height: 32px;
-  padding: 6px 2px;
+  min-height: 27px;
+  padding: 3px 2px;
   background: transparent;
   border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.gps-panel .gps-details-row {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  min-height: 31px;
+  padding-block: 3px;
+  border-bottom: 0;
 }
 
 .gps-panel .cell {
   gap: 6px;
   min-width: 0;
+}
+
+.gps-panel .gps-details-row .cell {
+  align-items: center;
+  flex-direction: column;
+  justify-content: center;
+  gap: 2px;
+}
+
+.gps-panel .gps-details-row .label {
+  font-size: 9px;
+  white-space: nowrap;
+}
+
+.gps-panel .gps-details-row .value {
+  font-size: 10px;
+  white-space: nowrap;
 }
 
 .gps-panel .coordinates-row .cell {
@@ -665,21 +721,23 @@ ion-toolbar ion-buttons[slot="end"] {
 }
 
 .locate-btn-wrapper {
-  bottom: calc(263px + env(safe-area-inset-bottom));
-  right: 16px;
-  z-index: 2002;
+  position: relative;
+  inset: auto;
+  margin: 0;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .map-layer-controls {
-  top: auto;
-  bottom: calc(190px + env(safe-area-inset-bottom));
-  left: 50%;
-  right: auto;
+  position: relative;
+  inset: auto;
+  margin: 0;
   flex-direction: row;
-  transform: translateX(-50%);
+  transform: none;
   gap: 6px;
   padding: 4px;
-  z-index: 2002;
+  z-index: 1;
+  pointer-events: auto;
 }
 
 .zoom-extend-btn-wrapper ion-fab-button,
@@ -726,19 +784,22 @@ ion-toolbar ion-buttons[slot="end"] {
 }
 
 @media (max-width: 360px) {
+  .map-bottom-dock {
+    right: 6px;
+    left: 6px;
+  }
+
+  .map-bottom-toolbar {
+    grid-template-columns: 108px minmax(0, 1fr) 40px;
+    gap: 4px;
+  }
+
   .map-drawing-controls {
     left: 8px;
     gap: 6px;
   }
 
-  .action-btn {
-    width: 42px;
-    height: 42px;
-  }
-
   .gps-panel {
-    left: 6px;
-    right: 6px;
     padding-inline: 7px;
   }
 
@@ -779,13 +840,5 @@ ion-toolbar ion-buttons[slot="end"] {
 
   .edit-mode-btn-wrapper {
     top: 184px;
-  }
-
-  .locate-btn-wrapper {
-    bottom: calc(205px + env(safe-area-inset-bottom));
-  }
-
-  .map-layer-controls {
-    bottom: calc(190px + env(safe-area-inset-bottom));
   }
 }

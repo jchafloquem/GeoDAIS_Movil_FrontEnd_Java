@@ -1,14 +1,17 @@
 :host {
-  position: absolute;
-  bottom: calc(190px + env(safe-area-inset-bottom));
-  left: 12px;
-  z-index: 2002; /* Por encima de la escala y el panel GPS */
+  position: static;
+  display: block;
+  width: 108px;
+  flex: 0 0 108px;
   font-family: Arial, Helvetica, sans-serif;
 }
 
 .legend-container {
-  min-width: 124px;
-  padding: 7px 8px;
+  box-sizing: border-box;
+  width: 108px;
+  min-width: 108px;
+  max-width: 108px;
+  padding: 7px 6px;
   border: 1px solid rgba(255, 255, 255, 0.82);
   background: rgba(250, 253, 251, 0.94);
   box-shadow: 0 8px 24px rgba(9, 31, 20, 0.2);
@@ -58,30 +61,25 @@ h6 {
 }
 
 @media (max-height: 700px) {
-  :host {
-    bottom: calc(180px + env(safe-area-inset-bottom));
-  }
-
   .legend-container {
-    min-width: 124px;
-    padding: 7px 8px;
+    padding: 4px 5px;
   }
 
   h6 {
-    margin-bottom: 5px;
-    font-size: 10px;
+    margin-bottom: 2px;
+    font-size: 9px;
   }
 
   .legend-item {
-    gap: 5px;
-    margin-bottom: 3px;
+    gap: 4px;
+    margin-bottom: 1px;
     font-size: 9px;
-    line-height: 11px;
+    line-height: 10px;
 
     i {
-      width: 10px;
-      height: 10px;
-      flex-basis: 10px;
+      width: 8px;
+      height: 8px;
+      flex-basis: 8px;
     }
   }
 }

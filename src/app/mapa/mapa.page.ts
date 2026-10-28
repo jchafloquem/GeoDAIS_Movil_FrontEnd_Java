@@ -149,6 +149,7 @@ export class MapaPage implements OnDestroy {
   private userCircle: any | null = null;
   private pulseCircle: any | null = null;
   private pulseInterval: any = null;
+  private isUserLocationMarkerHidden = true;
   private peruLayer: any | null = null;
   private drawnItems: any | null = null; // FeatureGroup para elementos dibujados
   private satelliteLayer: any | null = null;
@@ -316,11 +317,11 @@ export class MapaPage implements OnDestroy {
   }
 
   /**
-   * Elimina los marcadores de ubicación del usuario (punto azul y pulso) del mapa.
-   * No detiene el servicio de GPS, que sigue funcionando en segundo plano.
-   * Al presionar "Centrar" de nuevo, los marcadores reaparecerán instantáneamente.
+   * Oculta los marcadores hasta que el usuario vuelva a centrar su ubicación.
+   * El seguimiento GPS continúa actualizando los datos en segundo plano.
    */
   resetUserLocation() {
+    this.isUserLocationMarkerHidden = true;
     if (this.pulseInterval) {
       clearInterval(this.pulseInterval);
       this.pulseInterval = null;
@@ -1246,34 +1247,8 @@ export class MapaPage implements OnDestroy {
         return;
       }
 
-      // Si los marcadores no existen, los creamos.
-      if (!this.userCircle) {
-        this.userCircle = L.circle([lat, lng], {
-          color: '#ffff',
-          fillColor: '#0D9BD7',
-          fillOpacity: 1, // Hacemos el punto sólido para mejor visibilidad
-          radius: 5,
-          weight: 2,
-        }).addTo(this.map);
-
-        this.pulseCircle = L.circle([lat, lng], {
-          color: 'transparent',
-          fillColor: '#3880ff',
-          fillOpacity: 0.5,
-          radius: 10, // Radio inicial consistente con la animación
-          weight: 0,
-        }).addTo(this.map);
-
-        const maxRadius = 40;
-        let radius = 10;
-        this.pulseInterval = setInterval(() => {
-          if (!this.pulseCircle) return;
-          radius += 1.5;
-          if (radius >= maxRadius) radius = 10;
-          this.pulseCircle.setRadius(radius);
-          this.pulseCircle.setStyle({ fillOpacity: 0.5 * (1 - (radius / maxRadius)) });
-        }, 50);
-      }
+      this.isUserLocationMarkerHidden = false;
+      this.ensureUserLocationMarker(L.latLng(lat, lng));
 
       this.map.setView([lat, lng], 18);
     } catch (error) {
@@ -1289,37 +1264,49 @@ export class MapaPage implements OnDestroy {
    * Esta función es llamada cada vez que se recibe una nueva coordenada del GPS.
    */
   private updateUserLocationMarker() {
-    if (!this.map || this.gpsData.lat === null || this.gpsData.lng === null) {
+    if (
+      this.isUserLocationMarkerHidden ||
+      !this.map ||
+      this.gpsData.lat === null ||
+      this.gpsData.lng === null
+    ) {
       return; // No hacer nada si no hay mapa o datos de GPS
     }
 
     const newLatLng = L.latLng(this.gpsData.lat, this.gpsData.lng);
 
-    // Si los marcadores ya existen, solo actualizamos su posición
-    if (this.userCircle && this.pulseCircle) {
-      this.userCircle.setLatLng(newLatLng);
-      this.pulseCircle.setLatLng(newLatLng);
-    } else {
-      // Si no existen, los creamos por primera vez
-      this.userCircle = L.circle(newLatLng, {
-        color: '#ffff',
-        fillColor: '#0D9BD7',
-        fillOpacity: 1,
-        radius: 5,
-        weight: 2,
-      }).addTo(this.map);
+    this.ensureUserLocationMarker(newLatLng);
+  }
 
-      this.pulseCircle = L.circle(newLatLng, {
+  private ensureUserLocationMarker(position: any) {
+    if (!this.userCircle) {
+      const crossIcon = L.divIcon({
+        className: 'gps-position-marker',
+        html: '<span class="gps-position-cross" aria-label="Ubicación GPS"></span>',
+        iconSize: [32, 32],
+        iconAnchor: [16, 16],
+      });
+      this.userCircle = L.marker(position, {
+        icon: crossIcon,
+        interactive: false,
+        keyboard: false,
+        title: 'Ubicación GPS actual',
+      }).addTo(this.map);
+    } else {
+      this.userCircle.setLatLng(position);
+    }
+
+    if (!this.pulseCircle) {
+      this.pulseCircle = L.circle(position, {
         color: 'transparent',
         fillColor: '#3880ff',
         fillOpacity: 0.5,
         radius: 10,
         weight: 0,
       }).addTo(this.map);
-
-      // Iniciamos la animación de pulso
-      if (this.pulseInterval) clearInterval(this.pulseInterval);
       this.startPulseAnimation();
+    } else {
+      this.pulseCircle.setLatLng(position);
     }
   }
 
@@ -1334,6 +1321,7 @@ export class MapaPage implements OnDestroy {
       zoomControl: false,
       zoom: 10
     });
+    map.attributionControl.setPrefix(false);
 
     // --- INICIO: Añadir control de búsqueda de direcciones (leaflet-geosearch) ---
     const provider = new OpenStreetMapProvider({
@@ -1370,7 +1358,12 @@ export class MapaPage implements OnDestroy {
 
     // Añadimos la capa de mapa por defecto
     this.satelliteLayer.addTo(map);
-    L.control.scale({ position: 'bottomleft', metric: true, imperial: false, maxWidth: 100 }).addTo(map);
+    const scaleControl = L.control.scale({ metric: true, imperial: false, maxWidth: 100 }).addTo(map);
+    const scaleSlot = map.getContainer().parentElement?.querySelector('.map-scale-slot');
+    if (!scaleSlot) {
+      throw new Error('No se encontró el contenedor para la escala del mapa.');
+    }
+    scaleSlot.appendChild(scaleControl.getContainer());
 
 
     // Inicializamos el FeatureGroup para los elementos dibujados

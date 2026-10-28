@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
-  appId: 'com.devida.geomovildais',
+  appId: 'com.dais.geomovil',
   appName: 'GeoMovilDAIS',
   webDir: 'www',
   plugins:{

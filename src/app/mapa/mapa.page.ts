@@ -55,7 +55,7 @@ import {
   wifiOutline,
 } from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
-import { Geolocation } from '@capacitor/geolocation';
+import { Geolocation, Position } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { RouterLink } from '@angular/router';
@@ -163,6 +163,7 @@ export class MapaPage implements OnDestroy {
   private polygonVertices: any[] = [];
 
   public isLoading = false;
+  public gpsLoadingMessage = 'Obteniendo Geolocalización...';
   public gpsData: GpsData = {
     lat: null,
     lng: null,
@@ -762,18 +763,31 @@ export class MapaPage implements OnDestroy {
       return;
     }
 
-    if (this.gpsData.lat === null || this.gpsData.lng === null) {
-      this.registerDataService.showToast('Ubicación GPS no disponible. Intente centrar el mapa primero.', 'warning', 'top');
+    this.gpsLoadingMessage = 'Midiendo precisión GPS H/V (hasta 3 s). Mantén el móvil quieto y al aire libre...';
+    this.isLoading = true;
+    let position: Position;
+    try {
+      position = await this.gpsAcquisitionService.getBestPositionForCapture();
+    } catch (error) {
+      const message = error instanceof Error ? error.message : 'Error desconocido';
+      await this.registerDataService.showToast(
+        `No se pudo obtener la mejor lectura GPS: ${message}`,
+        'danger',
+        'middle'
+      );
       return;
+    } finally {
+      this.isLoading = false;
+      this.gpsLoadingMessage = 'Obteniendo Geolocalización...';
     }
 
-    // Create a GeoJSON Point feature
+    const { latitude, longitude, altitude } = position.coords;
     const pointGeoJSON = {
       type: 'Feature',
       properties: {},
       geometry: {
         type: 'Point',
-        coordinates: [this.gpsData.lng, this.gpsData.lat, this.gpsData.alt] // lon, lat, alt
+        coordinates: [longitude, latitude, typeof altitude === 'number' ? altitude : null]
       }
     };
 

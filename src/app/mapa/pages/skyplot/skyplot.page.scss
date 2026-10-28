@@ -9,6 +9,14 @@ ion-toolbar {
   box-shadow: 0 4px 8px rgba(0,0,0,0.1);
 }
 
+.gps-guidance {
+  margin: 0;
+  padding: 12px 16px;
+  color: var(--ion-color-step-600, #666);
+  font-size: 0.9rem;
+  line-height: 1.45;
+}
+
 .info-card {
   background: var(--ion-color-light);
   ion-list {

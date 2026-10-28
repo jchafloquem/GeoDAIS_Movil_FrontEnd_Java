@@ -10,6 +10,48 @@ export interface GpsData {
   accV: number | null;
 }
 
+export interface GpsPositionSample {
+  timestamp: number;
+  coords: {
+    accuracy: number;
+    altitude?: number | null;
+    altitudeAccuracy: number | null | undefined;
+  };
+}
+
+export function isBetterHorizontalPosition(
+  current: GpsPositionSample | null,
+  candidate: GpsPositionSample
+): boolean {
+  return isValidGpsAccuracy(candidate.coords.accuracy) &&
+    (current === null ||
+      !isValidGpsAccuracy(current.coords.accuracy) ||
+      candidate.coords.accuracy < current.coords.accuracy ||
+      (candidate.coords.accuracy === current.coords.accuracy && candidate.timestamp > current.timestamp));
+}
+
+export function isBetterVerticalPosition(
+  current: GpsPositionSample | null,
+  candidate: GpsPositionSample
+): boolean {
+  const candidateAccuracy = candidate.coords.altitudeAccuracy;
+  if (
+    !isValidGpsAccuracy(candidateAccuracy) ||
+    typeof candidate.coords.altitude !== 'number' ||
+    !Number.isFinite(candidate.coords.altitude)
+  ) {
+    return false;
+  }
+
+  const currentAccuracy = current?.coords.altitudeAccuracy;
+  return current === null ||
+    !isValidGpsAccuracy(currentAccuracy) ||
+    typeof current.coords.altitude !== 'number' ||
+    !Number.isFinite(current.coords.altitude) ||
+    candidateAccuracy < currentAccuracy ||
+    (candidateAccuracy === currentAccuracy && candidate.timestamp > current.timestamp);
+}
+
 export const GPS_ACCURACY_THRESHOLDS = {
   high: 5,
   medium: 15,

@@ -89,7 +89,7 @@
     <!-- Spinner de carga -->
     <ion-loading
       [isOpen]="isLoading"
-      message="Obteniendo Geolocalización..."
+      [message]="gpsLoadingMessage"
       cssClass="custom-loading"
       spinner="bubbles"
       translucent="true"
@@ -141,7 +141,7 @@
         </div>
         <div class="cell">
           <span class="label">Precisión V. estimada</span>
-          <span class="value">{{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : '—' }}</span>
+          <span class="value">{{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : 'No informada' }}</span>
         </div>
       </div>
     </section>

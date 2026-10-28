@@ -1,9 +1,8 @@
-import { Injectable, NgZone } from '@angular/core';
+import { inject, Injectable, NgZone } from '@angular/core';
 import { Router } from '@angular/router';
 import { Preferences } from '@capacitor/preferences';
 import { Device } from '@capacitor/device';
 import { Filesystem, Directory } from '@capacitor/filesystem';
-import { Geolocation } from '@capacitor/geolocation';
 import { Capacitor, CapacitorHttp } from '@capacitor/core';
 import { ConnectionStatus, Network } from '@capacitor/network';
 import { ToastController, NavController, AlertController, LoadingController } from '@ionic/angular/standalone';
@@ -14,6 +13,7 @@ import * as L from 'leaflet';
 
 import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
 import { GPS_ACCURACY_THRESHOLDS, GpsDataService, isValidGpsAccuracy } from './gps-data.service';
+import { GpsAcquisitionService } from './gps-acquisition.service';
 
 // Reutilizamos la interfaz de propiedades
 export interface ValidationResult {
@@ -110,6 +110,7 @@ const USER_PROFILE_KEY = 'userProfile';
 })
 export class RegisterDataService {
 
+  private readonly gpsAcquisitionService = inject(GpsAcquisitionService);
   private isOnline = true;
   private lastGpsAlt: number | null = null;
 
@@ -1088,21 +1089,16 @@ export class RegisterDataService {
       // --- INICIO: LÓGICA DE GEOLOCALIZACIÓN ROBUSTA ---
       let position;
       try {
-        // Con el GPS "caliente" gracias a GpsAcquisitionService, esta llamada debería ser muy rápida.
-        // Pedimos una ubicación reciente (máximo 10s de antigüedad) con un timeout corto.
-        console.log('[RegisterDataService] takePicture: Obteniendo ubicación GPS actual...');
-        position = await Geolocation.getCurrentPosition({
-          enableHighAccuracy: true,
-          timeout: 5000, // 5 segundos de timeout es suficiente
-          maximumAge: 10000 // Aceptamos una ubicación de hasta 10 segundos de antigüedad
-        });
+        console.log('[RegisterDataService] takePicture: Buscando la mejor precisión GPS H/V...');
+        loading.message = 'Midiendo precisión GPS H/V (hasta 3 s). Mantén el móvil quieto y al aire libre...';
+        position = await this.gpsAcquisitionService.getBestPositionForCapture();
 
         const horizontalAccuracy = position.coords.accuracy;
         if (!isValidGpsAccuracy(horizontalAccuracy)) {
           throw new Error('El GPS no reportó una precisión horizontal válida.');
         }
         if (horizontalAccuracy > GPS_ACCURACY_THRESHOLDS.photo) {
-          throw new Error(`La precisión del GPS es muy baja (${horizontalAccuracy.toFixed(1)}m). Por favor, busque un lugar con mejor señal e intente de nuevo.`);
+          throw new Error(`La mejor precisión horizontal obtenida fue ${horizontalAccuracy.toFixed(1)} m. Salga a un espacio abierto, mantenga el teléfono quieto e intente de nuevo.`);
         }
 
       } catch (error: any) {
@@ -1110,6 +1106,16 @@ export class RegisterDataService {
         throw error;
       }
       // --- FIN: LÓGICA DE GEOLOCALIZACIÓN ROBUSTA ---
+
+      if (!isValidGpsAccuracy(position.coords.altitudeAccuracy)) {
+        await this.showToast(
+          'El móvil no informó precisión vertical. La ubicación horizontal se guardará; la altitud no se puede verificar en este dispositivo.',
+          'warning',
+          'middle',
+          5000
+        );
+      }
+
       const coords = position.coords;
       if (
         !coords ||
@@ -1126,6 +1132,8 @@ export class RegisterDataService {
       const date = new Date();
       const textLines = [
         `Lat: ${coords.latitude.toFixed(5)} Lon: ${coords.longitude.toFixed(5)}`,
+        `Precisión H: ± ${coords.accuracy.toFixed(1)} m`,
+        `Altitud: ${typeof coords.altitude === 'number' ? coords.altitude.toFixed(1) + ' m' : 'N/D'} | Precisión V: ${isValidGpsAccuracy(coords.altitudeAccuracy) ? '± ' + coords.altitudeAccuracy.toFixed(1) + ' m' : 'N/D'}`,
         `${date.toLocaleDateString()} ${date.toLocaleTimeString()}`
       ];
 

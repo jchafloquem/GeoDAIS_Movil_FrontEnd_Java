@@ -35,8 +35,11 @@
       <ion-item>
         <ion-label>Precisión vertical estimada</ion-label>
         <ion-note slot="end">
-          {{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : '—' }}
+          {{ gpsData.accV !== null ? '± ' + (gpsData.accV | number:'1.1-1') + ' m' : 'No informada' }}
         </ion-note>
       </ion-item>
     </ion-list>
+    <p class="gps-guidance">
+      Para mejorar la lectura, mantén el móvil quieto y al aire libre durante unos segundos. La precisión vertical depende del sensor del teléfono y puede no estar disponible.
+    </p>
   </div>

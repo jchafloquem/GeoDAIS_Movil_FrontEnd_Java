@@ -86,6 +86,6 @@ flowchart TB
 ## Flujos principales
 
 1. **Acceso:** `LoginPage` delega en `AuthService`. Con conexión usa Firebase Authentication y guarda los datos necesarios para el modo sin conexión en `Preferences`; sin conexión valida contra ese almacenamiento local.
-2. **Captura geográfica:** `GpsAcquisitionService` obtiene posiciones mediante Capacitor Geolocation y las publica en `GpsDataService`. El mapa y el flujo de registro consumen ese estado.
+2. **Captura geográfica:** `GpsAcquisitionService` obtiene posiciones mediante Capacitor Geolocation y las publica en `GpsDataService`. En la captura de fotos y puntos del mapa observa el GPS durante hasta 3 segundos, selecciona las muestras de mejor precisión horizontal y vertical por separado y conserva la lectura vertical como no disponible cuando el dispositivo no la reporta.
 3. **Registro y sincronización:** las pestañas de captura alimentan `RegisterDataService`. Los datos y archivos se guardan localmente; cuando se recupera la conexión, los registros pendientes se envían mediante `ApiService` a la API DEVIDA.
 4. **Mapa:** `MapaPage` usa Leaflet y Leaflet Draw para la visualización y edición de geometrías y obtiene las teselas de los proveedores configurados.

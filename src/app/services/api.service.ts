@@ -172,20 +172,13 @@ export class ApiService {
     const sanitizedPayload = { ...payload };
 
     // --- INICIO: SANITIZADOR DE DATOS ---
-    // El backend espera un NÚMERO para 'SUPERFICIE_MIDAGRI'. Aquí nos aseguramos
-    // de convertir el valor o enviarlo como null si no es un número válido.
-    const superficieStr = sanitizedPayload.SUPERFICIE_MIDAGRI;
-    if (superficieStr && typeof superficieStr === 'string') {
-      console.log(`[ApiService] Sanitizando SUPERFICIE_MIDAGRI. Valor original: "${superficieStr}"`);
-      const superficieNum = Number.parseFloat(superficieStr);
-      // Si la conversión resulta en un número válido, lo usamos.
-      // Si no (ej. "NO REGISTRA" se convierte en NaN), enviamos null.
-      sanitizedPayload.SUPERFICIE_MIDAGRI = Number.isNaN(superficieNum) ? null : superficieNum;
-      console.log(`[ApiService] SUPERFICIE_MIDAGRI sanitizado a: ${sanitizedPayload.SUPERFICIE_MIDAGRI}`);
-    } else if (typeof sanitizedPayload.SUPERFICIE_MIDAGRI !== 'number') {
-      console.log(`[ApiService] SUPERFICIE_MIDAGRI no es string ni número. Forzando a null. Valor original:`, sanitizedPayload.SUPERFICIE_MIDAGRI);
-      // Si no es un string ni un número (ej. es '', undefined), lo forzamos a null.
-      sanitizedPayload.SUPERFICIE_MIDAGRI = null;
+    const superficie = sanitizedPayload.superficie_midagri;
+    if (typeof superficie === 'string') {
+      const normalized = superficie.trim().replace(',', '.');
+      const parsed = Number(normalized);
+      sanitizedPayload.superficie_midagri = normalized && Number.isFinite(parsed) ? parsed : null;
+    } else if (typeof superficie !== 'number' || !Number.isFinite(superficie)) {
+      sanitizedPayload.superficie_midagri = null;
     }
     // --- FIN: SANITIZADOR DE DATOS ---
 

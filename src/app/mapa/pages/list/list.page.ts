@@ -21,7 +21,8 @@ import {
   NavController
 } from '@ionic/angular/standalone';
 import { shapesOutline, locationOutline, analyticsOutline, createOutline, trashOutline, listOutline, imageOutline, ellipsisVerticalOutline, close, mapOutline, listCircleOutline, arrowBackCircleOutline, lockClosed, eyeOutline } from 'ionicons/icons';
-import { RegisterDataService, SavedRecordSummary } from 'src/app/services/register-data.service';
+import { SavedRecordSummary } from 'src/app/interfaces/register-data.interfaces';
+import { RegisterDataService } from 'src/app/services/register-data.service';
 
 @Component({
   selector: 'app-list',

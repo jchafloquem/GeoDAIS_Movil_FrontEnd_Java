@@ -552,6 +552,7 @@ ion-toolbar ion-buttons[slot="end"] {
   right: auto;
   width: 100%;
   z-index: 2001;
+  transform: translateY(-3px);
   padding: 5px 9px 2px;
   color: #f8fafc;
   background: rgba(15, 23, 32, 0.94);

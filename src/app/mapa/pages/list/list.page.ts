@@ -55,6 +55,7 @@ import { RegisterDataService } from 'src/app/services/register-data.service';
 })
 export class ListPage {
   public savedItems: SavedRecordSummary[] = [];
+  private isOpeningRecord = false;
   public viewMode: 'local' | 'server' = 'local';
   public serverItems: RegistroParcelaApiRecord[] = [];
   public serverPage = 0;
@@ -94,6 +95,7 @@ export class ListPage {
   }
 
   async ionViewWillEnter() {
+    this.isOpeningRecord = false;
     await this.loadSavedItems();
     if (this.viewMode === 'server') {
       await this.loadServerItems(true);
@@ -147,8 +149,21 @@ export class ListPage {
       || [item.nombres, item.apellidoPaterno, item.apellidoMaterno].filter(Boolean).join(' ');
   }
 
-  editItem(item: SavedRecordSummary) {
-    this.navCtrl.navigateForward(`/mapa/registerdata/${item.key}`);
+  async editItem(item: SavedRecordSummary) {
+    if (this.isOpeningRecord) {
+      return;
+    }
+
+    this.isOpeningRecord = true;
+    try {
+      const navigated = await this.navCtrl.navigateForward(`/mapa/registerdata/${item.key}`);
+      if (!navigated) {
+        this.isOpeningRecord = false;
+      }
+    } catch (error) {
+      this.isOpeningRecord = false;
+      throw error;
+    }
   }
 
   async presentActionSheet(item: SavedRecordSummary, index: number, event: Event) {

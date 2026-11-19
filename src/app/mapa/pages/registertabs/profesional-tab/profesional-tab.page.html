@@ -1,14 +1,14 @@
-<ion-content>
+<ion-content class="profesional-content">
   <!-- Muestra los datos si el perfil del profesional fue encontrado -->
   <div *ngIf="professionalProfile; else noProfile">
-    <ion-card>
-      <ion-card-header>
-        <ion-card-title color="white">Datos del Profesional</ion-card-title>
+    <ion-card class="profesional-card">
+      <ion-card-header color="primary">
+        <ion-card-title color="white" class="tab-card-title">Datos del Profesional</ion-card-title>
         <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-list>
-          <ion-item>
+          <ion-item class="data-field">
             <ion-input
               label="DNI"
               labelPlacement="stacked"
@@ -18,7 +18,7 @@
             ></ion-input>
           </ion-item>
 
-          <ion-item>
+          <ion-item class="data-field">
             <ion-input
               label="Nombres"
               labelPlacement="stacked"
@@ -28,7 +28,7 @@
             ></ion-input>
           </ion-item>
 
-          <ion-item>
+          <ion-item class="data-field">
             <ion-input
               label="Apellidos"
               labelPlacement="stacked"
@@ -38,7 +38,7 @@
             ></ion-input>
           </ion-item>
 
-          <ion-item>
+          <ion-item class="data-field">
             <ion-input
               label="Celular"
               labelPlacement="stacked"
@@ -47,7 +47,7 @@
             ></ion-input>
           </ion-item>
 
-          <ion-item>
+          <ion-item class="data-field">
             <ion-input
               label="Correo Electrónico"
               labelPlacement="stacked"
@@ -62,10 +62,13 @@
 
   <!-- Mensaje a mostrar si no se encuentra el perfil del profesional -->
   <ng-template #noProfile>
-    <div class="ion-text-center ion-padding">
-      <h3>Perfil del Profesional no Encontrado</h3>
-      <p>No se ha registrado un perfil para el usuario de esta aplicación.</p>
-      <p>Por favor, vaya al menú principal y seleccione <strong>"Registrar mi Perfil"</strong> para configurar la aplicación.</p>
-    </div>
+    <ion-card class="professional-empty-state">
+      <ion-card-content class="ion-text-center">
+        <ion-icon name="person-circle-outline" aria-hidden="true"></ion-icon>
+        <h3>Perfil del Profesional no Encontrado</h3>
+        <p>No se ha registrado un perfil para el usuario de esta aplicación.</p>
+        <p>Por favor, vaya al menú principal y seleccione <strong>"Registrar mi Perfil"</strong> para configurar la aplicación.</p>
+      </ion-card-content>
+    </ion-card>
   </ng-template>
 </ion-content>

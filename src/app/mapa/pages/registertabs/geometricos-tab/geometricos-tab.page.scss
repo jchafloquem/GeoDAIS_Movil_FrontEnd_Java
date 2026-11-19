@@ -1,40 +1,153 @@
-// Reusing styles for consistency
-ion-card {
-  margin-top: 16px;
-  margin-bottom: 16px;
+.geometricos-content {
+  --background: #eef5f0;
+  --padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
+}
+
+.geometricos-card {
+  margin: 12px max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left));
+  border: 1px solid rgba(13, 166, 66, 0.14);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(6, 58, 42, 0.12);
 
   ion-card-header {
-    background-color: #0DA642;
-    color: white;
+    color: #fff;
+    background: linear-gradient(105deg, #063a2a 0%, #075235 58%, #0b7540 100%);
+    border-bottom: 1px solid rgba(199, 245, 140, 0.35);
+  }
+
+  ion-card-content {
+    padding: 8px 10px 12px;
   }
 }
 
-ion-list[lines="none"] ion-item {
-  --inner-padding-end: 0;
-  --padding-start: 0;
+.tab-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 18px;
+
+  ion-icon {
+    flex: 0 0 auto;
+    font-size: 20px;
+  }
 }
 
-// Contenedor para alinear el título y el chip
+ion-list {
+  background: transparent;
+
+  ion-item.form-field {
+    min-height: 72px;
+    margin: 6px 0;
+    padding-inline: 8px;
+    border: 1px solid #cfdfd4;
+    border-radius: 12px;
+    --background: #f9fcfa;
+    --inner-padding-end: 8px;
+    --padding-start: 8px;
+
+    &::part(native) {
+      background: #f9fcfa;
+    }
+
+    &:focus-within {
+      border-color: var(--ion-color-primary);
+      box-shadow: 0 0 0 3px rgba(13, 166, 66, 0.12);
+    }
+
+    ion-input,
+    ion-select {
+      min-height: 64px;
+      font-size: 16px;
+      --color: #17342a;
+      --highlight-color-focused: var(--ion-color-primary);
+      --padding-top: 10px;
+      --padding-bottom: 10px;
+    }
+
+    ion-input::part(label),
+    ion-select::part(label) {
+      margin-bottom: 6px;
+      color: #5e756b;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 16px;
+    }
+
+    ion-input::part(native) {
+      line-height: 24px;
+    }
+  }
+
+  ion-item.geometry-metric {
+    min-height: 62px;
+    margin: 6px 0;
+    padding-inline: 12px;
+    border: 1px solid #cfe4d5;
+    border-radius: 12px;
+    --background: #edf7f1;
+    --inner-padding-end: 8px;
+    --padding-start: 8px;
+
+    &::part(native) {
+      background: #edf7f1;
+    }
+
+    ion-label {
+      margin-block: 10px;
+    }
+
+    h2 {
+      margin-bottom: 4px;
+      color: #0b7540;
+      font-size: 12px;
+      font-weight: 700;
+    }
+
+    p {
+      color: #17342a;
+      font-size: 15px;
+      line-height: 1.4;
+      overflow-wrap: anywhere;
+    }
+  }
+
+  .observations-field ion-textarea {
+    min-height: 88px;
+    --padding-top: 12px;
+    --padding-bottom: 12px;
+  }
+}
+
 .header-container {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
+  margin-top: 8px;
 }
 
-// Estilo para el chip que indica el tipo de geometría
 .geometry-chip {
-  --background: rgba(255, 255, 255, 0.9);
-  --color: #0DA642; // Usamos el color principal para que resalte
+  --background: rgba(255, 255, 255, 0.94);
+  --color: #0b7540;
   font-weight: bold;
-  height: 28px;
+  min-height: 32px;
   border-color: rgba(255, 255, 255, 0.7);
+  margin-inline: 0;
 
   ion-icon {
     font-size: 18px;
   }
 }
+
 .uppercase-input::part(native) {
   text-transform: uppercase;
+}
+
+@media (max-width: 360px) {
+  .geometricos-card {
+    margin-inline: 8px;
+  }
 }
 

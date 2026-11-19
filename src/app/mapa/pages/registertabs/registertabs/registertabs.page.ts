@@ -1,7 +1,7 @@
 import { Component, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { ActivatedRoute } from '@angular/router';
-import { IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonButton } from '@ionic/angular/standalone';
+import { IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonButton } from '@ionic/angular/standalone';
 import { addIcons } from 'ionicons';
 import { personOutline, leafOutline, shapesOutline, cameraOutline, saveOutline, createOutline, pencilOutline, idCardOutline } from 'ionicons/icons';
 import { RegisterDataService } from 'src/app/services/register-data.service';
@@ -13,7 +13,7 @@ import { map } from 'rxjs/operators';
   templateUrl: './registertabs.page.html',
   styleUrls: ['./registertabs.page.scss'],
   standalone: true,
-  imports: [CommonModule, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonContent, IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonButton]
+  imports: [CommonModule, IonHeader, IonToolbar, IonButtons, IonBackButton, IonTitle, IonTabs, IonTabBar, IonTabButton, IonIcon, IonLabel, IonButton]
 })
 export class RegistertabsPage implements OnInit {
 

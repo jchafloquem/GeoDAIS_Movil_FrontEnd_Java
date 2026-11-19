@@ -2,22 +2,76 @@
   text-transform: uppercase;
 }
 
-ion-card-header {
-  background-color: #0DA642; // El verde como en la sección productor
-  color: white;
+.fotos-content {
+  --background: #eef5f0;
+  --padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
 }
 
+.fotos-card {
+  margin: 12px max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left));
+  border: 1px solid rgba(13, 166, 66, 0.14);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(6, 58, 42, 0.12);
 
+  ion-card-header {
+    color: #fff;
+    background: linear-gradient(105deg, #063a2a 0%, #075235 58%, #0b7540 100%);
+    border-bottom: 1px solid rgba(199, 245, 140, 0.35);
+  }
 
-ion-list-header {
-  padding-bottom: 8px;
+  ion-card-content {
+    padding: 8px 12px 12px;
+  }
+}
+
+.tab-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 18px;
+
+  ion-icon {
+    flex: 0 0 auto;
+    font-size: 20px;
+  }
+}
+
+.photo-list {
+  background: transparent;
+}
+
+.photo-list-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  min-height: 48px;
+  padding: 0 2px 8px;
+
+  ion-label {
+    color: #17342a;
+    font-size: 14px;
+    font-weight: 700;
+  }
+
+  ion-note {
+    padding: 5px 9px;
+    border: 1px solid #c4dfce;
+    border-radius: 999px;
+    background: #dff0e5;
+    color: #0b7540;
+    font-size: 11px;
+    font-weight: 700;
+    white-space: nowrap;
+  }
 }
 
 .photo-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr; // 2 columnas como en productor-tab
-  gap: 16px;
-  padding: 0 0 16px; // El padding horizontal lo maneja ion-card-content
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 0 0 8px;
 }
 
 .photo-container {
@@ -25,22 +79,38 @@ ion-list-header {
 
   .photo-box {
     width: 100%;
-    aspect-ratio: 1.25; // Un aspect ratio más general que el de DNI
-    border: 2px dashed var(--ion-color-medium);
-    border-radius: 8px;
+    aspect-ratio: 1.25;
+    border: 2px dashed #69a77e;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     overflow: hidden;
-    background-color: var(--ion-color-light-tint);
-    transition: background-color 0.3s ease;
+    background: linear-gradient(145deg, #f7fcf8 0%, #edf7f1 100%);
+    transition: background-color 160ms ease, border-color 160ms ease, transform 160ms ease;
+    -webkit-tap-highlight-color: transparent;
 
     &.add-photo-box {
       cursor: pointer;
       &:hover {
-        background-color: var(--ion-color-light-shade);
+        background: #dff0e5;
+        border-color: var(--ion-color-primary);
       }
+
+      &:active {
+        transform: scale(0.98);
+      }
+
+      &:focus-visible {
+        outline: 3px solid var(--ion-color-primary);
+        outline-offset: 2px;
+      }
+    }
+
+    &.disabled-box {
+      opacity: 0.5;
+      pointer-events: none;
     }
 
     img {
@@ -50,26 +120,27 @@ ion-list-header {
     }
 
     ion-icon {
-      font-size: 40px;
-      color: var(--ion-color-medium);
+      font-size: 36px;
+      color: var(--ion-color-primary);
     }
 
     ion-label {
-      font-size: 0.9em;
-      color: var(--ion-color-medium);
-      margin-top: 8px;
+      margin-top: 6px;
+      color: #5e756b;
+      font-size: 13px;
+      font-weight: 700;
     }
   }
 
   .delete-photo-btn {
     position: absolute;
-    top: -12px;
-    right: -12px;
-    --background: rgba(255, 255, 255, 0.7);
-    --background-hover: rgba(255, 255, 255, 1);
+    top: -10px;
+    right: -10px;
+    --background: #fff;
+    --background-hover: #f1f8f3;
     --border-radius: 50%;
-    width: 28px;
-    height: 28px;
+    width: 44px;
+    height: 44px;
   }
 }
 
@@ -88,11 +159,24 @@ ion-list-header {
   top: 15px;
   right: 15px;
   z-index: 10;
-  font-size: 2rem;
+  width: 48px;
+  height: 48px;
+  --border-radius: 14px;
+  --background: rgba(15, 23, 32, 0.72);
   --color: white;
 }
 
 .viewer-swiper {
   width: 100%;
   height: 100%;
+}
+
+@media (max-width: 360px) {
+  .fotos-card {
+    margin-inline: 8px;
+  }
+
+  .photo-grid {
+    gap: 8px;
+  }
 }

@@ -2,7 +2,105 @@
   text-transform: uppercase;
 }
 
-ion-card-header {
-  background-color: #0DA642; // El verde como en la sección productor
-  color: white;
+.profesional-content {
+  --background: #eef5f0;
+  --padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
+}
+
+.profesional-card,
+.professional-empty-state {
+  margin: 12px max(12px, env(safe-area-inset-right)) 16px max(12px, env(safe-area-inset-left));
+  border: 1px solid rgba(13, 166, 66, 0.14);
+  border-radius: 16px;
+  overflow: hidden;
+  box-shadow: 0 8px 22px rgba(6, 58, 42, 0.12);
+}
+
+.profesional-card {
+  ion-card-header {
+    color: #fff;
+    background: linear-gradient(105deg, #063a2a 0%, #075235 58%, #0b7540 100%);
+    border-bottom: 1px solid rgba(199, 245, 140, 0.35);
+  }
+
+  ion-card-content {
+    padding: 8px 10px 12px;
+  }
+}
+
+.tab-card-title {
+  font-size: 18px;
+}
+
+.profesional-card ion-list {
+  background: transparent;
+
+  ion-item.data-field {
+    min-height: 72px;
+    margin: 6px 0;
+    padding-inline: 8px;
+    border: 1px solid #cfdfd4;
+    border-radius: 12px;
+    --background: #f9fcfa;
+    --inner-padding-end: 8px;
+    --padding-start: 8px;
+
+    &::part(native) {
+      background: #f9fcfa;
+    }
+
+    ion-input {
+      min-height: 64px;
+      font-size: 16px;
+      --color: #17342a;
+      --padding-top: 10px;
+      --padding-bottom: 10px;
+    }
+
+    ion-input::part(label) {
+      margin-bottom: 6px;
+      color: #5e756b;
+      font-size: 12px;
+      font-weight: 700;
+      line-height: 16px;
+    }
+
+    ion-input::part(native) {
+      line-height: 24px;
+    }
+  }
+}
+
+.professional-empty-state {
+  margin-top: 24px;
+  border-color: #cfe4d5;
+  background: #f9fcfa;
+
+  ion-card-content {
+    padding: 28px 20px;
+  }
+
+  ion-icon {
+    color: var(--ion-color-primary);
+    font-size: 52px;
+  }
+
+  h3 {
+    margin: 12px 0 8px;
+    color: #0b7540;
+    font-size: 18px;
+  }
+
+  p {
+    color: #52685e;
+    font-size: 14px;
+    line-height: 1.5;
+  }
+}
+
+@media (max-width: 360px) {
+  .profesional-card,
+  .professional-empty-state {
+    margin-inline: 8px;
+  }
 }

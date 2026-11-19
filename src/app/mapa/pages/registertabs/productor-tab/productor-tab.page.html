@@ -1,71 +1,72 @@
-<ion-content>
+<ion-content [fullscreen]="true" class="productor-content">
   <ng-container *ngIf="registerDataService.formData$ | async as formData">
-    <ion-card>
+    <ion-card class="productor-card">
       <ion-card-header color="primary">
-        <ion-card-title color="white" style="display: flex; justify-content: space-between; align-items: center;">
+        <ion-card-title color="white" class="productor-card-title">
           Datos del Productor
-          <ion-icon *ngIf="formData.uploaded" name="lock-closed" style="font-size: 1.2em;"></ion-icon>
+          <ion-icon *ngIf="formData.uploaded" name="lock-closed" aria-label="Registro bloqueado"></ion-icon>
         </ion-card-title>
         <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-list lines="none">
-          <ion-item>
-            <ion-input label="DNI" label-placement="stacked" type="tel" maxlength="8" name="DNI"
+          <ion-item class="dni-field">
+            <ion-input label="DNI" label-placement="stacked" type="tel" inputmode="numeric" maxlength="8" name="DNI" autocomplete="off"
                        [ngModel]="formData.DNI"
                        (ngModelChange)="onDniChange($event)"
                        [disabled]="!!formData.uploaded">
             </ion-input>
-            <ion-button slot="end" (click)="searchDni()" [disabled]="!formData.DNI || formData.DNI.length !== 8 || !!formData.uploaded">
+            <ion-button class="dni-search-button" slot="end" fill="solid" (click)="searchDni()" aria-label="Buscar datos por DNI"
+                        [disabled]="!formData.DNI || formData.DNI.length !== 8 || !!formData.uploaded">
               <ion-icon name="search" slot="icon-only"></ion-icon>
             </ion-button>
           </ion-item>
-          <ion-note *ngIf="registerDataService.requiresDniSearch" color="medium" class="ion-padding-start">
+          <ion-note *ngIf="registerDataService.requiresDniSearch" color="medium" class="dni-change-note">
             DNI modificado. Busca para consultar los datos del nuevo documento.
           </ion-note>
 
-          <ion-item>
-            <ion-input label="Nombres" label-placement="stacked" name="NOMBRES"
+          <ion-item class="form-field">
+            <ion-input label="Nombres" label-placement="stacked" name="NOMBRES" autocomplete="given-name"
                        [ngModel]="formData.NOMBRES"
                        (ngModelChange)="formData.NOMBRES = $event"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
-          <ion-item>
-            <ion-input label="Apellido Paterno" label-placement="stacked" name="APELLIDO_PATERNO"
+          <ion-item class="form-field">
+            <ion-input label="Apellido Paterno" label-placement="stacked" name="APELLIDO_PATERNO" autocomplete="family-name"
                        [ngModel]="formData.APELLIDO_PATERNO"
                        (ngModelChange)="formData.APELLIDO_PATERNO = $event"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
-          <ion-item>
-            <ion-input label="Apellido Materno" label-placement="stacked" name="APELLIDO_MATERNO"
+          <ion-item class="form-field">
+            <ion-input label="Apellido Materno" label-placement="stacked" name="APELLIDO_MATERNO" autocomplete="additional-name"
                        [ngModel]="formData.APELLIDO_MATERNO"
                        (ngModelChange)="formData.APELLIDO_MATERNO = $event"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
-          <ion-item>
-            <ion-input label="Fecha de Nacimiento" label-placement="stacked" type="date" name="FECHA_NACIMIENTO"
+          <ion-item class="form-field">
+            <ion-input label="Fecha de Nacimiento" label-placement="stacked" type="date" name="FECHA_NACIMIENTO" autocomplete="bday"
                        [ngModel]="formData.FECHA_NACIMIENTO"
                        (ngModelChange)="formData.FECHA_NACIMIENTO = $event"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
 
-          <ion-item>
-            <ion-input label="Celular" label-placement="stacked" type="tel" maxlength="9" pattern="[0-9]*" name="CELULAR_PARTICIPANTE"
+          <ion-item class="form-field">
+            <ion-input label="Celular" label-placement="stacked" type="tel" inputmode="numeric" maxlength="9" pattern="[0-9]*" name="CELULAR_PARTICIPANTE" autocomplete="tel"
                        [ngModel]="formData.CELULAR_PARTICIPANTE"
                        (ngModelChange)="formData.CELULAR_PARTICIPANTE = $event"
                        [disabled]="formData.CELULAR_PARTICIPANTE === 'NO TIENE' || !!formData.uploaded"
                        required></ion-input>
           </ion-item>
-          <ion-item lines="none">
+          <ion-item lines="none" class="no-phone-field">
             <ion-checkbox [checked]="formData.CELULAR_PARTICIPANTE === 'NO TIENE'"
                           (ionChange)="formData.CELULAR_PARTICIPANTE = $event.detail.checked ? 'NO TIENE' : ''"
                           [disabled]="!!formData.uploaded">No tiene Celular</ion-checkbox>
           </ion-item>
 
-          <ion-item>
+          <ion-item class="form-field producer-type-field">
             <ion-select label="Tipo de Productor" label-placement="stacked" interface="action-sheet" placeholder="Seleccione una opción" name="TIPO_PRODUCTOR"
                         [ngModel]="formData.TIPO_PRODUCTOR"
                         (ngModelChange)="formData.TIPO_PRODUCTOR = $event"
@@ -84,7 +85,12 @@
           <div class="dni-photo-grid">
             <!-- DNI Anverso -->
             <div class="dni-photo-container">
-              <div class="photo-box" (click)="!formData.uploaded && takeDniPhoto('front')" [class.disabled-box]="formData.uploaded" [style.opacity]="formData.uploaded ? '0.5' : '1'" [style.pointer-events]="formData.uploaded ? 'none' : 'auto'">
+              <div class="photo-box" role="button" tabindex="0" aria-label="Tomar foto del anverso del DNI"
+                   (click)="!formData.uploaded && takeDniPhoto('front')"
+                   (keydown.enter)="!formData.uploaded && takeDniPhoto('front')"
+                   (keydown.space)="!formData.uploaded && takeDniPhoto('front')"
+                   [class.disabled-box]="formData.uploaded"
+                   [attr.aria-disabled]="formData.uploaded">
                 <img *ngIf="formData.RUTA_DNI_FRONT" [src]="getCapacitorFileSrc(formData.RUTA_DNI_FRONT)" alt="DNI Anverso" />
                 <ion-icon *ngIf="!formData.RUTA_DNI_FRONT" name="camera-outline"></ion-icon>
                 <ion-label *ngIf="!formData.RUTA_DNI_FRONT">Anverso</ion-label>
@@ -95,7 +101,12 @@
             </div>
             <!-- DNI Reverso -->
             <div class="dni-photo-container">
-              <div class="photo-box" (click)="!formData.uploaded && takeDniPhoto('back')" [class.disabled-box]="formData.uploaded" [style.opacity]="formData.uploaded ? '0.5' : '1'" [style.pointer-events]="formData.uploaded ? 'none' : 'auto'">
+              <div class="photo-box" role="button" tabindex="0" aria-label="Tomar foto del reverso del DNI"
+                   (click)="!formData.uploaded && takeDniPhoto('back')"
+                   (keydown.enter)="!formData.uploaded && takeDniPhoto('back')"
+                   (keydown.space)="!formData.uploaded && takeDniPhoto('back')"
+                   [class.disabled-box]="formData.uploaded"
+                   [attr.aria-disabled]="formData.uploaded">
                 <img *ngIf="formData.RUTA_DNI_BACK" [src]="getCapacitorFileSrc(formData.RUTA_DNI_BACK)" alt="DNI Reverso" />
                 <ion-icon *ngIf="!formData.RUTA_DNI_BACK" name="camera-outline"></ion-icon>
                 <ion-label *ngIf="!formData.RUTA_DNI_BACK">Reverso</ion-label>

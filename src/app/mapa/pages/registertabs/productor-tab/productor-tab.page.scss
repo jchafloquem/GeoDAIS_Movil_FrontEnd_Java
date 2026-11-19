@@ -1,27 +1,153 @@
-ion-card {
-  margin-top: 16px;
-  margin-bottom: 16px;
+:host {
+  --form-field-height: 72px;
+}
 
-  ion-card-header {
-    color: white;
+.productor-content {
+  --padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
+  --background: #eef5f0;
+}
+
+.productor-card {
+  margin: 12px max(12px, env(safe-area-inset-left)) 16px max(12px, env(safe-area-inset-right));
+  border-radius: 16px;
+  overflow: hidden;
+  border: 1px solid rgba(13, 166, 66, 0.14);
+  box-shadow: 0 8px 22px rgba(6, 58, 42, 0.12);
+}
+
+.productor-card-header,
+ion-card-header {
+  color: white;
+  background: linear-gradient(105deg, #063a2a 0%, #075235 58%, #0b7540 100%);
+  border-bottom: 1px solid rgba(199, 245, 140, 0.35);
+}
+
+.productor-card-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 18px;
+
+  ion-icon {
+    flex: 0 0 auto;
+    font-size: 20px;
   }
 }
 
+.productor-card ion-card-content {
+  padding: 8px 10px 12px;
+}
+
 ion-list[lines="none"] ion-item {
-  --inner-padding-end: 0;
-  --padding-start: 0;
+  --inner-padding-end: 8px;
+  --padding-start: 8px;
+  --min-height: var(--form-field-height);
+}
+
+.form-field,
+.dni-field,
+.producer-type-field {
+  margin: 6px 0;
+  border: 1px solid #cfdfd4;
+  border-radius: 12px;
+  --background: #f9fcfa;
+  transition: border-color 160ms ease, box-shadow 160ms ease, background-color 160ms ease;
+
+  &::part(native) {
+    background: #f9fcfa;
+  }
+
+  &:focus-within {
+    border-color: var(--ion-color-primary);
+    background: #fff;
+    box-shadow: 0 0 0 3px rgba(13, 166, 66, 0.12);
+  }
+}
+
+.form-field ion-input,
+.dni-field ion-input,
+.producer-type-field ion-select {
+  min-height: 64px;
+  font-size: 16px;
+  --highlight-color-focused: var(--ion-color-primary);
+  --color: #17342a;
+  --placeholder-color: #7b9187;
+  --padding-top: 10px;
+  --padding-bottom: 10px;
+}
+
+.form-field ion-input::part(label),
+.dni-field ion-input::part(label),
+.producer-type-field ion-select::part(label) {
+  color: #5e756b;
+  font-size: 12px;
+  font-weight: 700;
+  line-height: 16px;
+  margin-bottom: 6px;
+}
+
+.form-field ion-input::part(native),
+.dni-field ion-input::part(native) {
+  margin-top: 2px;
+  line-height: 24px;
+}
+
+.dni-field {
+  align-items: center;
+}
+
+.dni-search-button {
+  --border-radius: 12px;
+  --background: var(--ion-color-primary);
+  --background-hover: var(--ion-color-primary-shade);
+  --background-activated: #08752f;
+  width: 44px;
+  height: 44px;
+  margin: 0 0 0 8px;
+  box-shadow: 0 4px 10px rgba(13, 166, 66, 0.24);
+}
+
+.dni-change-note {
+  display: block;
+  padding: 4px 10px 8px;
+  line-height: 1.35;
+  color: #64786e;
+}
+
+.no-phone-field {
+  --min-height: 48px;
+  margin: 2px 0 6px;
+  --inner-padding-end: 8px;
+  --padding-start: 8px;
+  --background: #edf7f1;
+  border: 1px solid #d5e8dc;
+  border-radius: 12px;
+}
+
+.no-phone-field ion-checkbox {
+  min-height: 44px;
+  font-size: 15px;
+  --color: #17342a;
+  --checkbox-background-checked: var(--ion-color-primary);
+  --border-color-checked: var(--ion-color-primary);
 }
 
 ion-item-divider {
-  margin-top: 16px;
-  --background: var(--ion-color-light);
+  margin-top: 12px;
+  --background: #dff0e5;
+  --color: #0b7540;
+  min-height: 44px;
+  border-radius: 10px;
+  border: 1px solid #c4dfce;
+  font-weight: 700;
 }
 
 .dni-photo-grid {
   display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 16px;
-  padding: 16px 8px;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+  padding: 12px 4px 4px;
 }
 
 .dni-photo-container {
@@ -32,16 +158,17 @@ ion-item-divider {
 
   .photo-box {
     width: 100%;
-    aspect-ratio: 1.58; // Proporción de una tarjeta de crédito/DNI
-    border: 2px dashed var(--ion-color-medium);
-    border-radius: 8px;
+    aspect-ratio: 1.58;
+    border: 2px dashed #69a77e;
+    border-radius: 12px;
     display: flex;
     flex-direction: column;
     align-items: center;
     justify-content: center;
     cursor: pointer;
     overflow: hidden;
-    background-color: var(--ion-color-light-tint);
+    background: linear-gradient(145deg, #f7fcf8 0%, #edf7f1 100%);
+    -webkit-tap-highlight-color: transparent;
 
     img {
       width: 100%;
@@ -50,14 +177,48 @@ ion-item-divider {
     }
 
     ion-icon {
-      font-size: 40px;
-      color: var(--ion-color-medium);
+      font-size: 36px;
+      color: var(--ion-color-primary);
+    }
+
+    ion-label {
+      margin-top: 6px;
+      font-size: 13px;
+      color: #5e756b;
+      font-weight: 700;
+    }
+
+    &:active {
+      background: #dff0e5;
+    }
+
+    &:focus-visible {
+      outline: 3px solid var(--ion-color-primary);
+      outline-offset: 2px;
+    }
+
+    &.disabled-box {
+      opacity: 0.5;
+      pointer-events: none;
+      filter: grayscale(0.25);
     }
   }
 
   .delete-dni-btn {
     position: absolute;
-    top: -12px;
-    right: -12px;
+    top: -10px;
+    right: -10px;
+    width: 44px;
+    height: 44px;
+  }
+}
+
+@media (max-width: 360px) {
+  .productor-card {
+    margin-inline: 8px;
+  }
+
+  .dni-photo-grid {
+    gap: 8px;
   }
 }

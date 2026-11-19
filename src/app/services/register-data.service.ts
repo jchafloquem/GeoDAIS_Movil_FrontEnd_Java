@@ -79,6 +79,7 @@ export class RegisterDataService {
     CODIGO_AUTOGENERADO_MIDAGRI: '',
     FECHA_REGISTRO_MIDAGRI: '',
     ACTIVIDAD_AGRARIA: '',
+
     SUPERFICIE_MIDAGRI: null,
     REGIMEN_TENENCIA: '',
     SEXO: '',

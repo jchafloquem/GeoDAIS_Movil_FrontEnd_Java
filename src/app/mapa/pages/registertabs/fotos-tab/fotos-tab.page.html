@@ -1,19 +1,19 @@
-<ion-content>
+<ion-content class="fotos-content">
   <ng-container *ngIf="registerDataService.formData$ | async as formData">
   <ng-container *ngIf="registerDataService.photosForDisplay$ | async as photosForDisplay">
-    <ion-card>
+    <ion-card class="fotos-card">
       <ion-card-header color="primary">
-        <ion-card-title color="white" style="display: flex; justify-content: space-between; align-items: center;">
+        <ion-card-title color="white" class="tab-card-title">
           Registro fotográfico
-          <ion-icon *ngIf="formData.uploaded" name="lock-closed" style="font-size: 1.2em;"></ion-icon>
+          <ion-icon *ngIf="formData.uploaded" name="lock-closed" aria-label="Registro bloqueado"></ion-icon>
         </ion-card-title>
         <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
-        <ion-list>
-          <ion-list-header>
+        <ion-list class="photo-list">
+          <ion-list-header class="photo-list-header">
             <ion-label>Fotos Adicionales ({{ photosForDisplay.length }} / 6)</ion-label>
-            <ion-note slot="end" color="primary">(Mínimo 2)</ion-note>
+            <ion-note slot="end" color="primary">Mínimo 2</ion-note>
           </ion-list-header>
         </ion-list>
         <!-- Cuadrícula de fotos -->
@@ -22,11 +22,15 @@
           <div *ngFor="let i of [0, 1, 2, 3, 4, 5]" class="photo-container">
             <div
               class="photo-box"
+              role="button"
+              tabindex="0"
+              [attr.aria-label]="photosForDisplay[i] ? 'Ver foto ' + (i + 1) : 'Añadir foto ' + (i + 1)"
+              [attr.aria-disabled]="formData.uploaded && !photosForDisplay[i]"
               [class.add-photo-box]="!photosForDisplay[i]"
-              [class.disabled-box]="formData.uploaded"
-              [style.opacity]="formData.uploaded && !photosForDisplay[i] ? '0.5' : '1'"
-              [style.pointer-events]="formData.uploaded && !photosForDisplay[i] ? 'none' : 'auto'"
+              [class.disabled-box]="formData.uploaded && !photosForDisplay[i]"
               (click)="photosForDisplay[i] ? openViewer(i) : (!formData.uploaded && registerDataService.takePicture())"
+              (keydown.enter)="photosForDisplay[i] ? openViewer(i) : (!formData.uploaded && registerDataService.takePicture())"
+              (keydown.space)="photosForDisplay[i] ? openViewer(i) : (!formData.uploaded && registerDataService.takePicture())"
             >
               <ng-container *ngIf="photosForDisplay[i] as photoSrc; else addPhotoContent">
                 <!-- Contenido para una foto existente -->
@@ -53,7 +57,7 @@
     <ion-modal [isOpen]="isViewerOpen" (didDismiss)="closeViewer()">
       <ng-template>
         <div class="viewer-container">
-          <ion-button fill="clear" class="close-viewer-btn" (click)="closeViewer()">
+          <ion-button fill="clear" class="close-viewer-btn" aria-label="Cerrar visor de fotos" (click)="closeViewer()">
             <ion-icon slot="icon-only" name="close"></ion-icon>
           </ion-button>
           <swiper-container *ngIf="photosForDisplay.length > 0" class="viewer-swiper" [options]="viewerSlideOpts" [zoom]="true" [initialSlide]="viewerSlideOpts.initialSlide">

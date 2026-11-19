@@ -175,6 +175,7 @@ export class MapaPage implements OnDestroy {
   public activeLayer: 'satellite' | 'streets' = 'satellite';
   public isDrawingPolygon = false;
   public isEditingMode = false;
+  private isOpeningGeometryEditor = false;
   public showInitialSpinner = true;
   public isDrawingLine = false;
   public isOnline = true;
@@ -236,6 +237,7 @@ export class MapaPage implements OnDestroy {
   }
 
   async ionViewWillEnter() {
+    this.isOpeningGeometryEditor = false;
     // Obtenemos el rol del usuario cuando la página está a punto de entrar en la vista
     this.userRole = await this.authService.getUserRole();
   }
@@ -1085,13 +1087,20 @@ export class MapaPage implements OnDestroy {
     // Para `isRecordIncomplete`, necesitamos el valor opuesto.
     return !this.registerDataService.isRecordComplete(properties);
   }
-  private editGeometryInfo(key: string) {
-    if (!key) return;
+  private async editGeometryInfo(key: string) {
+    if (!key || this.isOpeningGeometryEditor) return;
+    this.isOpeningGeometryEditor = true;
     // Navegamos a la ruta de edición, pasando la clave como parámetro en la URL.
     // La página de registro se encargará de cargar los datos usando esta clave.
-    this.zone.run(() => {
-      this.navCtrl.navigateForward(`/mapa/registerdata/${key}`);
-    });
+    try {
+      const navigated = await this.zone.run(() => this.navCtrl.navigateForward(`/mapa/registerdata/${key}`));
+      if (!navigated) {
+        this.isOpeningGeometryEditor = false;
+      }
+    } catch (error) {
+      this.isOpeningGeometryEditor = false;
+      throw error;
+    }
   }
 
   private async loadSavedGeometries() {

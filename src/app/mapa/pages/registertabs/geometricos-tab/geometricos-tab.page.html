@@ -1,10 +1,10 @@
-<ion-content>
+<ion-content class="geometricos-content">
   <ng-container *ngIf="registerDataService.formData$ | async as formData">
-    <ion-card>
+    <ion-card class="geometricos-card">
       <ion-card-header color="primary">
-        <ion-card-title color="white" style="display: flex; justify-content: space-between; align-items: center;">
+        <ion-card-title color="white" class="tab-card-title">
           Datos Geométricos
-          <ion-icon *ngIf="formData.uploaded" name="lock-closed" style="font-size: 1.2em;"></ion-icon>
+          <ion-icon *ngIf="formData.uploaded" name="lock-closed" aria-label="Registro bloqueado"></ion-icon>
         </ion-card-title>
           <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
         <div class="header-container">
@@ -16,7 +16,7 @@
       </ion-card-header>
       <ion-card-content>
         <ion-list lines="none">
-          <ion-item>
+          <ion-item class="form-field">
             <ion-select [label]="userRole === 'animal-crops' ? 'Tipo de Crianza' : 'Tipo de Cultivo'"
                         label-placement="stacked" interface="action-sheet"
                         [placeholder]="userRole === 'animal-crops' ? 'Seleccione la crianza' : 'Seleccione un cultivo'"
@@ -43,82 +43,82 @@
 
             </ion-select>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field">
             <ion-input label="Variedad" label-placement="stacked" maxlength="2"
                        [ngModel]="formData.VARIEDAD"
                        (ngModelChange)="formData.VARIEDAD = $event"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field">
             <ion-input label="Oficina Zonal" label-placement="stacked"
                        [ngModel]="formData.UBIGEO_OFICINA_ZONAL"
                        (ngModelChange)="formData.UBIGEO_OFICINA_ZONAL = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field">
             <ion-input label="Departamento" label-placement="stacked"
                        [ngModel]="formData.TXT_DEPARTAMENTO"
                        (ngModelChange)="formData.TXT_DEPARTAMENTO = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field">
             <ion-input label="Provincia" label-placement="stacked"
                        [ngModel]="formData.TXT_PROVINCIA"
                        (ngModelChange)="formData.TXT_PROVINCIA = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field">
             <ion-input label="Distrito" label-placement="stacked"
                        [ngModel]="formData.TXT_DISTRITO"
                        (ngModelChange)="formData.TXT_DISTRITO = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field">
             <ion-input label="Caserío" label-placement="stacked"
                        [ngModel]="formData.UBIGEO_CASERIO"
                        (ngModelChange)="formData.UBIGEO_CASERIO = $event"
                        class="uppercase-input"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field readonly-field">
             <ion-input label="Fuente" label-placement="stacked" [readonly]="true"
                        [ngModel]="formData.FUENTE"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field readonly-field">
             <ion-input label="Datum" label-placement="stacked" [readonly]="true"
                        [ngModel]="formData.DATUM"
                        [disabled]="!!formData.uploaded"></ion-input>
           </ion-item>
-          <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'">
+          <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'" class="geometry-metric">
             <ion-label>
               <h2>Perímetro</h2>
               <p>{{ formData.perimetro || 'Calculando...' }}</p>
             </ion-label>
           </ion-item>
-          <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'">
+          <ion-item *ngIf="formData.geometryTypeLabel !== 'Punto'" class="geometry-metric">
             <ion-label>
               <h2>Área</h2>
               <p>{{ formData.area || 'Calculando...' }}</p>
             </ion-label>
           </ion-item>
-          <ion-item>
+          <ion-item class="geometry-metric">
             <ion-label>
               <h2>Altitud Promedio</h2>
               <p>{{ formData.altitud || 'Calculando...' }}</p>
             </ion-label>
           </ion-item>
-          <ion-item>
+          <ion-item class="geometry-metric">
             <ion-label>
               <h2>Centroide (Lat, Lon)</h2>
               <p>{{ formData.centroide || 'Calculando...' }}</p>
             </ion-label>
           </ion-item>
-          <ion-item>
+          <ion-item class="form-field observations-field">
             <ion-textarea label="Observaciones" label-placement="stacked" [autoGrow]="true"
                           placeholder="Añada notas adicionales aquí..."
                           [ngModel]="formData.OBSERVACIONES"

@@ -8,11 +8,14 @@ import {
   IonCardTitle,
   IonCardSubtitle,
   IonContent,
+  IonIcon,
   IonInput,
   IonItem,
   IonList,
 } from '@ionic/angular/standalone';
 import { Preferences } from '@capacitor/preferences';
+import { addIcons } from 'ionicons';
+import { personCircleOutline } from 'ionicons/icons';
 
 // Define una interfaz para el perfil del profesional
 interface ProfessionalProfile {
@@ -40,6 +43,7 @@ const USER_PROFILE_KEY = 'userProfile';
     IonCardSubtitle,
     IonCardTitle,
     IonContent,
+    IonIcon,
     IonInput,
     IonItem,
     IonList,
@@ -48,7 +52,9 @@ const USER_PROFILE_KEY = 'userProfile';
 export class ProfesionalTabPage implements OnInit {
   public professionalProfile: ProfessionalProfile | null = null;
 
-  constructor() { }
+  constructor() {
+    addIcons({ personCircleOutline });
+  }
 
   ngOnInit() {
     this.loadProfessionalProfile();

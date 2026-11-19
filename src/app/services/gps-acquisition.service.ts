@@ -1,5 +1,5 @@
-import { Injectable, NgZone } from '@angular/core';
-import { Geolocation, Position, PositionOptions } from '@capacitor/geolocation';
+import { inject, Injectable, InjectionToken, NgZone } from '@angular/core';
+import { Geolocation, GeolocationPlugin, Position, PositionOptions } from '@capacitor/geolocation';
 import {
   GpsData,
   GpsDataService,
@@ -10,12 +10,20 @@ import {
 } from './gps-data.service';
 import { ToastController } from '@ionic/angular/standalone';
 
+export const GPS_GEOLOCATION = new InjectionToken<GeolocationPlugin>('GPS_GEOLOCATION', {
+  providedIn: 'root',
+  factory: () => Geolocation,
+});
 
 @Injectable({
   providedIn: 'root'
 })
 export class GpsAcquisitionService {
 
+  private readonly gpsDataService = inject(GpsDataService);
+  private readonly zone = inject(NgZone);
+  private readonly toastController = inject(ToastController);
+  private readonly geolocation = inject(GPS_GEOLOCATION);
   private readonly captureDurationMs = 8000;
   private readonly reusablePositionMaxAgeMs = 1500;
   private watchId: string | null = null;
@@ -23,12 +31,6 @@ export class GpsAcquisitionService {
   private readonly captureListeners = new Set<(position: Position) => void>();
   private startPromise: Promise<void> | null = null;
   private generation = 0;
-
-  constructor(
-    private readonly gpsDataService: GpsDataService,
-    private readonly zone: NgZone,
-    private readonly toastController: ToastController
-  ) { }
 
   public async startGpsWatch() {
     if (this.watchId) {
@@ -55,9 +57,9 @@ export class GpsAcquisitionService {
 
   private async createGpsWatch(generation: number): Promise<void> {
     try {
-      let permissions = await Geolocation.checkPermissions();
+      let permissions = await this.geolocation.checkPermissions();
       if (permissions.location !== 'granted') {
-        permissions = await Geolocation.requestPermissions({ permissions: ['location'] });
+        permissions = await this.geolocation.requestPermissions({ permissions: ['location'] });
       }
 
       if (permissions.location !== 'granted') {
@@ -81,7 +83,7 @@ export class GpsAcquisitionService {
       };
 
       console.log('[GpsAcquisitionService] Iniciando seguimiento GPS (watchPosition)...');
-      const watchId = await Geolocation.watchPosition(options, (position, err) => {
+      const watchId = await this.geolocation.watchPosition(options, (position, err) => {
         this.zone.run(() => {
           if (err) {
             console.error('Error al observar la posición del GPS', err);
@@ -119,7 +121,7 @@ export class GpsAcquisitionService {
       });
 
       if (generation !== this.generation) {
-        await Geolocation.clearWatch({ id: watchId });
+        await this.geolocation.clearWatch({ id: watchId });
         return;
       }
 
@@ -150,9 +152,9 @@ export class GpsAcquisitionService {
       return this.captureFromActiveWatch();
     }
 
-    let permissions = await Geolocation.checkPermissions();
+    let permissions = await this.geolocation.checkPermissions();
     if (permissions.location !== 'granted') {
-      permissions = await Geolocation.requestPermissions({ permissions: ['location'] });
+      permissions = await this.geolocation.requestPermissions({ permissions: ['location'] });
     }
 
     if (permissions.location !== 'granted') {
@@ -166,7 +168,7 @@ export class GpsAcquisitionService {
       let settled = false;
 
       const clearWatch = (id: string) => {
-        void Geolocation.clearWatch({ id }).catch(error => {
+        void this.geolocation.clearWatch({ id }).catch(error => {
           console.error('Error al detener la captura temporal del GPS', error);
         });
       };
@@ -199,7 +201,7 @@ export class GpsAcquisitionService {
         minimumUpdateInterval: 0,
       };
 
-      Geolocation.watchPosition(options, (position, err) => {
+      this.geolocation.watchPosition(options, (position, err) => {
         if (err) {
           lastError = err instanceof Error ? err : new Error('No se pudo leer la ubicación GPS.');
           return;
@@ -311,7 +313,7 @@ export class GpsAcquisitionService {
     if (this.watchId) {
       const watchId = this.watchId;
       this.watchId = null;
-      void Geolocation.clearWatch({ id: watchId }).catch(error => {
+      void this.geolocation.clearWatch({ id: watchId }).catch(error => {
         console.error('Error al detener el seguimiento del GPS', error);
       });
       console.log('[GpsAcquisitionService] Seguimiento GPS detenido.');

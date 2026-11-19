@@ -1,8 +1,6 @@
-declare const describe: any;
-declare const it: any;
-declare const expect: any;
-
 import {
+  GpsData,
+  GpsDataService,
   getGpsAccuracyQuality,
   isBetterHorizontalPosition,
   isBetterVerticalPosition,
@@ -11,6 +9,52 @@ import {
   isReusableGpsPosition,
   isValidGpsAccuracy,
 } from './gps-data.service';
+
+describe('GpsDataService', () => {
+  let service: GpsDataService;
+
+  beforeEach(() => {
+    service = new GpsDataService();
+  });
+
+  it('starts with an empty location snapshot', () => {
+    let current: GpsData | undefined;
+    const subscription = service.currentGpsData.subscribe(data => {
+      current = data;
+    });
+
+    expect(current).toEqual({
+      lat: null,
+      lng: null,
+      alt: null,
+      vel: null,
+      accH: null,
+      accV: null,
+    });
+    subscription.unsubscribe();
+  });
+
+  it('publishes the latest location snapshot to subscribers', () => {
+    const snapshots: GpsData[] = [];
+    const subscription = service.currentGpsData.subscribe(data => snapshots.push(data));
+    const nextPosition: GpsData = {
+      lat: -12.0464,
+      lng: -77.0428,
+      alt: 154,
+      vel: 1.2,
+      accH: 4,
+      accV: 7,
+    };
+
+    service.updateGpsData(nextPosition);
+
+    expect(snapshots).toEqual([
+      { lat: null, lng: null, alt: null, vel: null, accH: null, accV: null },
+      nextPosition,
+    ]);
+    subscription.unsubscribe();
+  });
+});
 
 describe('GPS accuracy', () => {
   it('accepts only finite, non-negative accuracy values', () => {

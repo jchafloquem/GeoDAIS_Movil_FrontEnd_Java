@@ -1,6 +1,13 @@
 import { Injectable } from '@angular/core';
 import { CapacitorHttp, HttpResponse } from '@capacitor/core';
-import { RegistroParcelaApiPage, RegistroParcelaApiRecord } from '../interfaces/register-data.interfaces';
+import type {
+  MidagriApiResponse,
+  MidagriProductor,
+  ParticipanteResponse,
+  PersonaIdentityResult,
+  ReniecResponse
+} from '../interfaces/api.interfaces';
+import type { RegistroParcelaApiPage, RegistroParcelaApiRecord } from '../interfaces/register-data.interfaces';
 import { environment } from '../../environments/environment';
 
 function isObject(value: unknown): value is Record<string, unknown> {
@@ -29,30 +36,6 @@ export function toBackendJson(payload: Record<string, unknown>): Record<string, 
   return backendPayload;
 }
 
-// Define interfaces para las respuestas de la API de RENIEC
-export interface ReniecResponse {
-  first_name: string;
-  first_last_name: string;
-  second_last_name: string;
-  birthday?: string;
-  sex?: string;
-  // Agrega otros campos si son necesarios según la respuesta real de la API
-}
-
-export interface ParticipanteResponse {
-  dni: string;
-  nombres?: string | null;
-  apellidoPaterno?: string | null;
-  apellidoMaterno?: string | null;
-  fechaNacimiento?: string | null;
-  sexo?: string | null;
-}
-
-export interface PersonaIdentityResult {
-  data: ReniecResponse;
-  source: 'Participantes' | 'RENIEC';
-}
-
 function isOptionalString(value: unknown): boolean {
   return value === undefined || value === null || typeof value === 'string';
 }
@@ -65,40 +48,6 @@ function isParticipanteResponse(value: unknown): value is ParticipanteResponse {
     && isOptionalString(value['apellidoMaterno'])
     && isOptionalString(value['fechaNacimiento'])
     && isOptionalString(value['sexo']);
-}
-
-// Define interfaces para los datos del productor de MIDAGRI
-export interface MidagriProductor {
-  txt_codigoautogenerado: string;
-  fec_registro: string;
-  txt_actagraria: string;
-  num_superficie: string;
-  txt_regtenencia: string;
-  txt_sexo: string;
-  txt_departamento: string;
-  txt_provincia: string;
-  txt_distrito: string;
-  // Agrega otros campos si son necesarios según la respuesta real de la API
-}
-
-// Define la interfaz para la respuesta completa de la API de MIDAGRI
-export interface MidagriApiResponse {
-  result: MidagriProductor | MidagriProductor[] | null; // Puede ser un objeto o un array de objetos
-  targetUrl: string | null;
-  success: boolean;
-  error: any | null;
-  unAuthorizedRequest: boolean;
-}
-
-// --- MEJORA: TIPADO FUERTE ---
-// Se define una interfaz para los objetos GeoJSON Feature para evitar el uso de `any`.
-export interface GeoJSONFeature {
-  type: 'Feature';
-  properties: { [key: string]: any };
-  geometry: {
-    type: string; // 'Point', 'LineString', 'Polygon', etc.
-    coordinates: any;
-  };
 }
 
 @Injectable({

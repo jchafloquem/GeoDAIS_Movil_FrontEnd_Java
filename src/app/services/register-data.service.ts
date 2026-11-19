@@ -11,7 +11,8 @@ import { Camera, CameraResultType, CameraSource } from '@capacitor/camera';
 import { LocalNotifications } from '@capacitor/local-notifications';
 import * as L from 'leaflet';
 
-import { ApiService, MidagriProductor, ReniecResponse } from './api.service';
+import { ApiService } from './api.service';
+import type { MidagriProductor, ReniecResponse } from '../interfaces/api.interfaces';
 import { GpsDataService, isValidGpsAccuracy } from './gps-data.service';
 import { GpsAcquisitionService } from './gps-acquisition.service';
 import { toRegistroParcelaApiPayload } from '../mappers/registro-parcela.mapper';

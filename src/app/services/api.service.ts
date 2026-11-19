@@ -39,6 +39,34 @@ export interface ReniecResponse {
   // Agrega otros campos si son necesarios según la respuesta real de la API
 }
 
+export interface ParticipanteResponse {
+  dni: string;
+  nombres?: string | null;
+  apellidoPaterno?: string | null;
+  apellidoMaterno?: string | null;
+  fechaNacimiento?: string | null;
+  sexo?: string | null;
+}
+
+export interface PersonaIdentityResult {
+  data: ReniecResponse;
+  source: 'Participantes' | 'RENIEC';
+}
+
+function isOptionalString(value: unknown): boolean {
+  return value === undefined || value === null || typeof value === 'string';
+}
+
+function isParticipanteResponse(value: unknown): value is ParticipanteResponse {
+  return isObject(value)
+    && typeof value['dni'] === 'string'
+    && isOptionalString(value['nombres'])
+    && isOptionalString(value['apellidoPaterno'])
+    && isOptionalString(value['apellidoMaterno'])
+    && isOptionalString(value['fechaNacimiento'])
+    && isOptionalString(value['sexo']);
+}
+
 // Define interfaces para los datos del productor de MIDAGRI
 export interface MidagriProductor {
   txt_codigoautogenerado: string;
@@ -111,6 +139,48 @@ export class ApiService {
       console.error('[ApiService] Detalles del error RENIEC:', error);
       throw new Error(`Error al consultar RENIEC: ${error.message || 'Error desconocido'}`); // Propagar el error para manejo en el componente
     }
+  }
+
+  async getParticipanteData(dni: string): Promise<ParticipanteResponse | null> {
+    const url = `${environment.apiUrl}/api/participantes?dni=${encodeURIComponent(dni)}`;
+    const response = await CapacitorHttp.get({
+      url,
+      headers: { Accept: 'application/json' }
+    });
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`[ApiService] Error HTTP ${response.status} al consultar participantes.`);
+    }
+
+    const body: unknown = response.data;
+    if (!Array.isArray(body) || !body.every(isParticipanteResponse)) {
+      throw new Error('[ApiService] La respuesta de participantes no tiene el formato documentado.');
+    }
+
+    return body.find(participante => participante.dni === dni) ?? null;
+  }
+
+  async getParticipanteOrReniecData(dni: string): Promise<PersonaIdentityResult | null> {
+    try {
+      const participante = await this.getParticipanteData(dni);
+      if (participante) {
+        return {
+          data: {
+            first_name: participante.nombres || '',
+            first_last_name: participante.apellidoPaterno || '',
+            second_last_name: participante.apellidoMaterno || '',
+            ...(participante.fechaNacimiento ? { birthday: participante.fechaNacimiento } : {}),
+            ...(participante.sexo ? { sex: participante.sexo } : {})
+          },
+          source: 'Participantes'
+        };
+      }
+    } catch (error) {
+      console.warn('[ApiService] No se pudo consultar participantes; se intentará con RENIEC:', error);
+    }
+
+    const reniecData = await this.getReniecData(dni);
+    return reniecData ? { data: reniecData, source: 'RENIEC' } : null;
   }
 
   async getMidagriData(dni: string): Promise<MidagriProductor | null> {

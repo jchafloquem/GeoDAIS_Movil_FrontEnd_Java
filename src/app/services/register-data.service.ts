@@ -24,6 +24,29 @@ import {
 
 const USER_PROFILE_KEY = 'userProfile';
 
+export function clearDniDependentData(
+  formData: Partial<LocalRegisterProperties>,
+  dni: string
+): Partial<LocalRegisterProperties> {
+  return {
+    ...formData,
+    DNI: dni,
+    NOMBRES: '',
+    APELLIDO_PATERNO: '',
+    APELLIDO_MATERNO: '',
+    FECHA_NACIMIENTO: '',
+    SEXO: '',
+    CODIGO_AUTOGENERADO_MIDAGRI: '',
+    FECHA_REGISTRO_MIDAGRI: '',
+    ACTIVIDAD_AGRARIA: '',
+    SUPERFICIE_MIDAGRI: null,
+    REGIMEN_TENENCIA: '',
+    MIDAGRI_DEPARTAMENTO: '',
+    MIDAGRI_PROVINCIA: '',
+    MIDAGRI_DISTRITO: ''
+  };
+}
+
 @Injectable({
   providedIn: 'root'
 })
@@ -32,6 +55,7 @@ export class RegisterDataService {
   private readonly gpsAcquisitionService = inject(GpsAcquisitionService);
   private isOnline = true;
   private lastGpsAlt: number | null = null;
+  private lastSearchedDni: string | null = null;
 
   // --- Estado Reactivo con BehaviorSubjects ---
   private readonly _geojson = new BehaviorSubject<GeoJSONFeature | null>(null);
@@ -79,6 +103,11 @@ export class RegisterDataService {
     RUTA_DNI_BACK: '',
   });
   readonly formData$ = this._formData.asObservable();
+
+  get requiresDniSearch(): boolean {
+    const dni = this._formData.getValue().DNI;
+    return typeof dni === 'string' && dni.length === 8 && dni !== this.lastSearchedDni;
+  }
 
   constructor(
     private router: Router,
@@ -215,6 +244,7 @@ export class RegisterDataService {
     this._editKey.next(null);
     this._photosForDisplay.next([]);
     this._savedPhotoUris.next([]);
+    this.lastSearchedDni = null;
     this._formData.next({
       // Restaurar los registros con la estructura local de propiedades.
       DNI: '',
@@ -269,10 +299,18 @@ export class RegisterDataService {
       geometryTypeLabel: currentForm.geometryTypeLabel,
     };
 
+    this.lastSearchedDni = typeof properties.DNI === 'string' ? properties.DNI : null;
     this._formData.next(newFormData);
   }
 
   // --- Lógica de Negocio (extraída de registerdata.page.ts) ---
+
+  public onDniChange(dni: string) {
+    const currentFormData = this._formData.getValue();
+    if (dni === currentFormData.DNI) return;
+
+    this._formData.next(clearDniDependentData(currentFormData, dni));
+  }
 
   public async searchDni(isSync: boolean = false) {
     const currentFormData = this._formData.getValue();
@@ -300,14 +338,18 @@ export class RegisterDataService {
     }
     // --- FIN LÓGICA OFFLINE ---
 
+    const searchedDni = currentFormData.DNI;
     const loading = !isSync ? await this.loadingController.create({ message: 'Buscando DNI...' }) : null;
     if (loading) await loading.present();
 
     try {
-      const { data, message, color } = await this._fetchExternalProductorData(currentFormData.DNI!);
+      const { data, message, color } = await this._fetchExternalProductorData(searchedDni);
 
-      // Actualiza el estado del formulario una sola vez con todos los datos consolidados
-      this._formData.next({ ...currentFormData, ...data });
+      const latestFormData = this._formData.getValue();
+      if (latestFormData.DNI !== searchedDni) return;
+
+      this.lastSearchedDni = searchedDni;
+      this._formData.next({ ...latestFormData, ...data });
 
       // Solo mostramos el toast si NO es una sincronización automática
       if (!isSync) {
@@ -320,7 +362,7 @@ export class RegisterDataService {
   }
 
   /**
-   * Centraliza la lógica de búsqueda de datos de productor en RENIEC y MIDAGRI.
+   * Centraliza la lógica de búsqueda de datos de productor en Participantes, RENIEC y MIDAGRI.
    * @param dni El DNI a consultar.
    * @returns Un objeto con los datos encontrados y la información para el toast.
    */
@@ -330,24 +372,25 @@ export class RegisterDataService {
     }
 
     const fetchedData: Partial<LocalRegisterProperties> = {};
-    let reniecSuccess = false;
+    let identitySource: 'Participantes' | 'RENIEC' | null = null;
     let midagriSuccess = false;
 
     try {
-      const reniecData = await this.apiService.getReniecData(dni);
-      if (reniecData) {
-        fetchedData.NOMBRES = (reniecData.first_name || 'NO ENCONTRADO').toUpperCase();
-        fetchedData.APELLIDO_PATERNO = (reniecData.first_last_name || 'NO ENCONTRADO').toUpperCase();
-        fetchedData.APELLIDO_MATERNO = (reniecData.second_last_name || 'NO ENCONTRADO').toUpperCase();
+      const identityResult = await this.apiService.getParticipanteOrReniecData(dni);
+      if (identityResult) {
+        const identityData = identityResult.data;
+        fetchedData.NOMBRES = (identityData.first_name || 'NO ENCONTRADO').toUpperCase();
+        fetchedData.APELLIDO_PATERNO = (identityData.first_last_name || 'NO ENCONTRADO').toUpperCase();
+        fetchedData.APELLIDO_MATERNO = (identityData.second_last_name || 'NO ENCONTRADO').toUpperCase();
 
-        // Capturamos fecha de nacimiento y sexo si vienen de RENIEC
-        if (reniecData.birthday) fetchedData.FECHA_NACIMIENTO = reniecData.birthday;
-        if (reniecData.sex) {
-          fetchedData.SEXO = (reniecData.sex === 'M' || reniecData.sex === 'MASCULINO') ? 'MASCULINO' : 'FEMENINO';
+        if (identityData.birthday) fetchedData.FECHA_NACIMIENTO = identityData.birthday;
+        if (identityData.sex) {
+          fetchedData.SEXO = (identityData.sex === 'M' || identityData.sex === 'MASCULINO') ? 'MASCULINO' : 'FEMENINO';
         }
-        reniecSuccess = true;
+        identitySource = identityResult.source;
       }
     } catch (err) {
+      console.error('[RegisterDataService] Error al consultar Participantes/RENIEC:', err);
     }
 
     try {
@@ -375,7 +418,7 @@ export class RegisterDataService {
     } catch (err) {
     }
 
-    if (!reniecSuccess) {
+    if (!identitySource) {
       fetchedData.NOMBRES = 'NO ENCONTRADO';
       fetchedData.APELLIDO_PATERNO = 'NO ENCONTRADO';
       fetchedData.APELLIDO_MATERNO = 'NO ENCONTRADO';
@@ -394,14 +437,14 @@ export class RegisterDataService {
     }
 
     let message = '', color: 'success' | 'warning' | 'danger' = 'danger';
-    if (reniecSuccess && midagriSuccess) {
-      message = 'Datos de RENIEC y MIDAGRI cargados.';
+    if (identitySource && midagriSuccess) {
+      message = `Datos de ${identitySource} y MIDAGRI cargados.`;
       color = 'success';
-    } else if (reniecSuccess) {
-      message = 'Datos de RENIEC cargados. No se encontraron en MIDAGRI.';
+    } else if (identitySource) {
+      message = `Datos de ${identitySource} cargados. No se encontraron en MIDAGRI.`;
       color = 'warning';
     } else if (midagriSuccess) {
-      message = 'Datos de MIDAGRI cargados. No se encontraron en RENIEC.';
+      message = 'Datos de MIDAGRI cargados. No se encontraron en Participantes ni RENIEC.';
       color = 'warning';
     } else {
       message = 'DNI no encontrado en ninguna de las fuentes.';

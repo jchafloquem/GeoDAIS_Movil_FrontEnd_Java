@@ -17,6 +17,7 @@ import {
   IonItemDivider,
   IonLabel,
   IonList,
+  IonNote,
   IonSelect,
   IonSelectOption,
 } from '@ionic/angular/standalone';
@@ -46,6 +47,7 @@ import { Capacitor } from '@capacitor/core';
     IonItemDivider,
     IonLabel,
     IonList,
+    IonNote,
     IonSelect,
     IonSelectOption,
     IonCheckbox, // <-- ¡Añade esta línea!
@@ -64,6 +66,10 @@ export class ProductorTabPage {
   // El método searchDni ahora se llama desde el servicio
   searchDni() {
     this.registerDataService.searchDni();
+  }
+
+  onDniChange(dni: string) {
+    this.registerDataService.onDniChange(dni);
   }
 
   takeDniPhoto(side: 'front' | 'back') {

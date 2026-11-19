@@ -27,6 +27,7 @@ export interface RegistroParcelaApiPayload {
   tipo_productor?: string | null;
   actividad_agraria?: string | null;
   tipo_cultivo?: string | null;
+  variedad?: string | null;
   regimen_tenencia?: string | null;
   superficie_midagri?: number | null;
   oficina_zonal?: string | null;
@@ -63,6 +64,68 @@ export interface RegistroParcelaApiPayload {
   eliminado: boolean;
 }
 
+/** Registro devuelto por GET /api/parcelas y GET /api/parcelas/{internalKey}. */
+export interface RegistroParcelaApiRecord {
+  internalKey: string;
+  codigoAutogenerado?: string | null;
+  dniProductor: string;
+  nParcela?: string | null;
+  nombres: string;
+  apellidoPaterno?: string | null;
+  apellidoMaterno?: string | null;
+  nombreCompleto?: string | null;
+  fechaNacimiento?: string | null;
+  sexo?: string | null;
+  celularParticipante?: string | null;
+  tipoProductor?: string | null;
+  actividadAgraria?: string | null;
+  tipoCultivo?: string | null;
+  variedad?: string | null;
+  regimenTenencia?: string | null;
+  superficieMidagri?: number | null;
+  oficinaZonal?: string | null;
+  ubigeo?: string | null;
+  departamento?: string | null;
+  provincia?: string | null;
+  distrito?: string | null;
+  caserio?: string | null;
+  geom: string;
+  centroide?: string | null;
+  areaHa?: number | null;
+  perimetroM?: number | null;
+  altitud?: number | null;
+  fuente?: string | null;
+  datum: string;
+  observaciones?: string | null;
+  profesionalDni: string;
+  profesionalNombres?: string | null;
+  profesionalApellidos?: string | null;
+  profesionalCelular?: string | null;
+  profesionalEmail?: string | null;
+  rutaDniAnverso?: string | null;
+  rutaDniReverso?: string | null;
+  rutaFoto1?: string | null;
+  rutaFoto2?: string | null;
+  rutaFoto3?: string | null;
+  rutaFoto4?: string | null;
+  rutaFoto5?: string | null;
+  rutaFoto6?: string | null;
+  deviceUuid?: string | null;
+  fechaCaptura?: string | null;
+  fechaCreacion: string;
+  fechaActualizacion: string;
+  eliminado: boolean;
+}
+
+export interface RegistroParcelaApiPage {
+  success: boolean;
+  data: RegistroParcelaApiRecord[];
+  page: number;
+  size: number;
+  total: number;
+  totalPages: number;
+}
+
 /** Legacy local GeoJSON/form shape persisted on the device. */
 export interface LocalRegisterProperties {
   INTERNAL_KEY?: string;
@@ -80,6 +143,7 @@ export interface LocalRegisterProperties {
   CELULAR_PARTICIPANTE: string;
   TIPO_PRODUCTOR: string;
   TIPO_CULTIVO: string;
+  VARIEDAD?: string;
   OBSERVACIONES: string;
   CODIGO_AUTOGENERADO_MIDAGRI: string;
   FECHA_REGISTRO_MIDAGRI: string;
@@ -130,3 +194,4 @@ export interface SavedRecordSummary {
   statusColor: 'danger' | 'warning' | 'success';
   uploaded?: boolean;
 }
+

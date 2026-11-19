@@ -15,13 +15,17 @@ import {
   IonItem,
   IonLabel,
   IonList,
+  IonSegment,
+  IonSegmentButton,
+  IonSpinner,
   IonThumbnail,
   IonTitle,
   IonToolbar,
   NavController
 } from '@ionic/angular/standalone';
 import { shapesOutline, locationOutline, analyticsOutline, createOutline, trashOutline, listOutline, imageOutline, ellipsisVerticalOutline, close, mapOutline, listCircleOutline, arrowBackCircleOutline, lockClosed, eyeOutline } from 'ionicons/icons';
-import { SavedRecordSummary } from 'src/app/interfaces/register-data.interfaces';
+import { RegistroParcelaApiRecord, SavedRecordSummary } from 'src/app/interfaces/register-data.interfaces';
+import { ApiService } from 'src/app/services/api.service';
 import { RegisterDataService } from 'src/app/services/register-data.service';
 
 @Component({
@@ -42,18 +46,30 @@ import { RegisterDataService } from 'src/app/services/register-data.service';
     IonIcon,
     IonButtons,
     IonCard,
+    IonSegment,
+    IonSegmentButton,
+    IonSpinner,
     IonThumbnail,
     IonImg,
     IonButton]
 })
 export class ListPage {
   public savedItems: SavedRecordSummary[] = [];
+  public viewMode: 'local' | 'server' = 'local';
+  public serverItems: RegistroParcelaApiRecord[] = [];
+  public serverPage = 0;
+  public serverSize = 50;
+  public serverTotal = 0;
+  public serverTotalPages = 0;
+  public serverLoading = false;
+  public serverError: string | null = null;
 
   constructor(
     private navCtrl: NavController,
     private alertController: AlertController,
     private actionSheetCtrl: ActionSheetController,
-    private registerDataService: RegisterDataService
+    private registerDataService: RegisterDataService,
+    private apiService: ApiService
   ) {
     addIcons({
       arrowBackCircleOutline,
@@ -77,12 +93,58 @@ export class ListPage {
     this.navCtrl.back();
   }
 
-  ionViewWillEnter() {
-    this.loadSavedItems();
+  async ionViewWillEnter() {
+    await this.loadSavedItems();
+    if (this.viewMode === 'server') {
+      await this.loadServerItems(true);
+    }
   }
 
   async loadSavedItems() {
     this.savedItems = await this.registerDataService.getSortedSavedRecords();
+  }
+
+  async onViewModeChanged() {
+    if (this.viewMode === 'server') {
+      await this.loadServerItems(true);
+    } else {
+      await this.loadSavedItems();
+    }
+  }
+
+  async loadServerItems(reset = false) {
+    if (this.serverLoading) {
+      return;
+    }
+    if (reset) {
+      this.serverPage = 0;
+      this.serverItems = [];
+      this.serverTotalPages = 0;
+    } else if (this.serverPage >= this.serverTotalPages) {
+      return;
+    }
+
+    this.serverLoading = true;
+    this.serverError = null;
+    try {
+      const result = await this.apiService.listarParcelas(this.serverPage, this.serverSize);
+      if (!result.success) {
+        throw new Error('El backend no devolvió los registros correctamente.');
+      }
+      this.serverItems = reset ? result.data : [...this.serverItems, ...result.data];
+      this.serverTotal = result.total;
+      this.serverTotalPages = result.totalPages;
+      this.serverPage = result.page + 1;
+    } catch (error) {
+      this.serverError = error instanceof Error ? error.message : 'No se pudieron leer los registros del backend.';
+    } finally {
+      this.serverLoading = false;
+    }
+  }
+
+  nombreProductor(item: RegistroParcelaApiRecord): string {
+    return item.nombreCompleto
+      || [item.nombres, item.apellidoPaterno, item.apellidoMaterno].filter(Boolean).join(' ');
   }
 
   editItem(item: SavedRecordSummary) {

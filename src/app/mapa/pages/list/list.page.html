@@ -11,33 +11,89 @@
 </ion-header>
 
 <ion-content>
-  <div *ngIf="savedItems.length === 0" class="empty-state">
-    <ion-icon name="list-outline" color="medium"></ion-icon>
-    <p>No hay registros guardados.</p>
-    <p>Vuelve al mapa para añadir un punto, línea o polígono.</p>
-  </div>
+  <ion-segment [(ngModel)]="viewMode" (ionChange)="onViewModeChanged()">
+    <ion-segment-button value="local">
+      <ion-label>En el dispositivo</ion-label>
+    </ion-segment-button>
+    <ion-segment-button value="server">
+      <ion-label>En el servidor</ion-label>
+    </ion-segment-button>
+  </ion-segment>
 
-  <ion-list *ngIf="savedItems.length > 0" [inset]="true" lines="none">
-    <ion-card *ngFor="let item of savedItems; let i = index" class="list-card" button (click)="editItem(item)">
-      <ion-item lines="none" class="card-item" detail="false">
-        <ion-thumbnail slot="start">
-          <ion-img *ngIf="item.thumbnail" [src]="item.thumbnail"></ion-img>
-          <div *ngIf="!item.thumbnail" class="no-photo-placeholder">
-            <ion-icon name="image-outline" color="medium"></ion-icon>
-          </div>
-        </ion-thumbnail>
-        <ion-label>
-          <h2>{{ item.name }}</h2>
-          <p class="item-meta">
-            <ion-icon [name]="item.icon" class="type-icon" color="primary"></ion-icon>
-            <span>{{ item.type }}</span>
-          </p>
-          <p class="item-meta date-note">{{ item.createdAt }}</p>
-        </ion-label>
-      </ion-item>
-      <ion-button fill="clear" class="more-button" (click)="presentActionSheet(item, i, $event)">
-        <ion-icon slot="icon-only" name="ellipsis-vertical-outline" color="dark"></ion-icon>
+  <ng-container *ngIf="viewMode === 'local'">
+    <div *ngIf="savedItems.length === 0" class="empty-state">
+      <ion-icon name="list-outline" color="medium"></ion-icon>
+      <p>No hay registros guardados.</p>
+      <p>Vuelve al mapa para añadir un punto, línea o polígono.</p>
+    </div>
+
+    <ion-list *ngIf="savedItems.length > 0" [inset]="true" lines="none">
+      <ion-card *ngFor="let item of savedItems; let i = index" class="list-card" button (click)="editItem(item)">
+        <ion-item lines="none" class="card-item" detail="false">
+          <ion-thumbnail slot="start">
+            <ion-img *ngIf="item.thumbnail" [src]="item.thumbnail"></ion-img>
+            <div *ngIf="!item.thumbnail" class="no-photo-placeholder">
+              <ion-icon name="image-outline" color="medium"></ion-icon>
+            </div>
+          </ion-thumbnail>
+          <ion-label>
+            <h2>{{ item.name }}</h2>
+            <p class="item-meta">
+              <ion-icon [name]="item.icon" class="type-icon" color="primary"></ion-icon>
+              <span>{{ item.type }}</span>
+            </p>
+            <p class="item-meta date-note">{{ item.createdAt }}</p>
+          </ion-label>
+        </ion-item>
+        <ion-button fill="clear" class="more-button" (click)="presentActionSheet(item, i, $event)">
+          <ion-icon slot="icon-only" name="ellipsis-vertical-outline" color="dark"></ion-icon>
+        </ion-button>
+      </ion-card>
+    </ion-list>
+  </ng-container>
+
+  <ng-container *ngIf="viewMode === 'server'">
+    <div class="server-toolbar">
+      <p>Parcelas activas: {{ serverTotal }}</p>
+      <ion-button fill="outline" size="small" (click)="loadServerItems(true)" [disabled]="serverLoading">
+        Actualizar
       </ion-button>
-    </ion-card>
-  </ion-list>
+    </div>
+
+    <div *ngIf="serverLoading" class="empty-state">
+      <ion-spinner name="crescent"></ion-spinner>
+      <p>Leyendo registros del servidor...</p>
+    </div>
+    <div *ngIf="serverError" class="empty-state" role="alert">
+      <p>{{ serverError }}</p>
+    </div>
+    <div *ngIf="!serverLoading && !serverError && serverItems.length === 0" class="empty-state">
+      <ion-icon name="list-outline" color="medium"></ion-icon>
+      <p>El servidor no tiene parcelas activas.</p>
+    </div>
+
+    <ion-list *ngIf="serverItems.length > 0" [inset]="true" lines="none">
+      <ion-card *ngFor="let item of serverItems" class="list-card">
+        <ion-item lines="none">
+          <ion-label>
+            <h2>{{ nombreProductor(item) }}</h2>
+            <p>Productor: {{ item.dniProductor }} · Parcela: {{ item.nParcela || '—' }}</p>
+            <p>Cultivo: {{ item.tipoCultivo || '—' }} · Variedad: {{ item.variedad || '—' }}</p>
+            <p>Ubicación: {{ item.departamento || '—' }} / {{ item.provincia || '—' }} / {{ item.distrito || '—' }}</p>
+            <p>Área: {{ item.areaHa ?? '—' }} ha · Creación: {{ item.fechaCreacion }}</p>
+            <details>
+              <summary>Ver campos recibidos</summary>
+              <pre class="server-record-json">{{ item | json }}</pre>
+            </details>
+          </ion-label>
+        </ion-item>
+      </ion-card>
+    </ion-list>
+
+    <div class="empty-state" *ngIf="serverItems.length < serverTotal">
+      <ion-button (click)="loadServerItems()" [disabled]="serverLoading">
+        {{ serverLoading ? 'Cargando...' : 'Cargar más' }}
+      </ion-button>
+    </div>
+  </ng-container>
 </ion-content>

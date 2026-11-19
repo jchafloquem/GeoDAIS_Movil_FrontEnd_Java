@@ -129,6 +129,22 @@ ion-label {
     margin: 4px 0;
   }
 }
+
+.server-toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0 16px;
+}
+
+.server-record-json {
+  max-height: 40vh;
+  overflow: auto;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  font-size: 0.75rem;
+}
+
 .back-circle-button {
   // Hacemos el fondo totalmente transparente
   --background: transparent;

@@ -1,6 +1,33 @@
 import { Injectable } from '@angular/core';
 import { CapacitorHttp, HttpResponse } from '@capacitor/core';
+import { RegistroParcelaApiPage, RegistroParcelaApiRecord } from '../interfaces/register-data.interfaces';
 import { environment } from '../../environments/environment';
+
+function isObject(value: unknown): value is Record<string, unknown> {
+  return typeof value === 'object' && value !== null;
+}
+
+function isRegistroParcelaApiRecord(value: unknown): value is RegistroParcelaApiRecord {
+  return isObject(value)
+    && typeof value['internalKey'] === 'string'
+    && typeof value['dniProductor'] === 'string'
+    && typeof value['nombres'] === 'string'
+    && typeof value['geom'] === 'string'
+    && typeof value['datum'] === 'string'
+    && typeof value['profesionalDni'] === 'string'
+    && typeof value['fechaCreacion'] === 'string'
+    && typeof value['fechaActualizacion'] === 'string'
+    && typeof value['eliminado'] === 'boolean';
+}
+
+export function toBackendJson(payload: Record<string, unknown>): Record<string, unknown> {
+  const backendPayload: Record<string, unknown> = {};
+  for (const [field, value] of Object.entries(payload)) {
+    const backendField = field.replace(/_([a-z])/g, (_, letter: string) => letter.toUpperCase());
+    backendPayload[backendField] = value;
+  }
+  return backendPayload;
+}
 
 // Define interfaces para las respuestas de la API de RENIEC
 export interface ReniecResponse {
@@ -158,45 +185,175 @@ export class ApiService {
 
   /**
    * Envía un único registro pre-procesado al backend.
-   * Este método espera que el payload ya esté construido y que la geometría (si existe)
-   * esté en el formato que espera el backend (ej. WKT).
+   * El backend espera un objeto JSON individual (no un array).
    * @param payload El objeto de datos listo para ser enviado como JSON.
    */
   async enviarRegistroIndividual(payload: any): Promise<HttpResponse> {
-    // CORRECCIÓN: Apuntamos al endpoint correcto y enviamos un objeto simple, como espera el backend.
-    const url = `${environment.apiUrl}/registros/single`;
+    const url = `${environment.apiUrl}/api/parcelas`;
     console.log(`[ApiService] Iniciando enviarRegistroIndividual a URL: ${url}`);
-    console.log('[ApiService] Payload original recibido:', JSON.stringify(payload));
 
-    // Clonamos el payload para poder sanitizarlo sin modificar el objeto original.
-    const sanitizedPayload = { ...payload };
-
-    // --- INICIO: SANITIZADOR DE DATOS ---
-    const superficie = sanitizedPayload.superficie_midagri;
-    if (typeof superficie === 'string') {
-      const normalized = superficie.trim().replace(',', '.');
-      const parsed = Number(normalized);
-      sanitizedPayload.superficie_midagri = normalized && Number.isFinite(parsed) ? parsed : null;
-    } else if (typeof superficie !== 'number' || !Number.isFinite(superficie)) {
-      sanitizedPayload.superficie_midagri = null;
-    }
-    // --- FIN: SANITIZADOR DE DATOS ---
-
-    console.log('[ApiService] Payload sanitizado para envío individual:', JSON.stringify(sanitizedPayload));
+    const sanitizedPayload = this.buildRegistroPayload(payload);
+    const geometryLength = typeof sanitizedPayload.geom === 'string' ? sanitizedPayload.geom.length : 0;
+    const startedAt = Date.now();
+    console.log(`[ApiService] Enviando ${Object.keys(sanitizedPayload).length} campos; geom=${geometryLength} caracteres.`);
 
     try {
       const response = await CapacitorHttp.post({
         url,
-        data: sanitizedPayload, // Enviamos el payload sanitizado directamente como un objeto
+        data: sanitizedPayload,
         headers: { 'Content-Type': 'application/json' }
       });
-      console.log(`[ApiService] Respuesta de enviarRegistroIndividual recibida. Status: ${response.status}`);
+      console.log(`[ApiService] Envío terminado. Status: ${response.status}, duración: ${Date.now() - startedAt} ms.`);
       console.log('[ApiService] Datos de respuesta (individual):', JSON.stringify(response.data));
       return response;
     } catch (error: any) {
       console.error(`[ApiService] Error crítico en enviarRegistroIndividual: ${error.message}`);
       console.error('[ApiService] Detalles del error (individual):', error);
-      throw error; // Re-lanzar el error para que el llamador lo maneje
+      throw error;
     }
+  }
+
+  async listarParcelas(page = 0, size = 50): Promise<RegistroParcelaApiPage> {
+    if (!Number.isInteger(page) || page < 0 || !Number.isInteger(size) || size < 1 || size > 100) {
+      throw new Error('[ApiService] La paginación debe tener page >= 0 y size entre 1 y 100.');
+    }
+
+    const url = `${environment.apiUrl}/api/parcelas?page=${page}&size=${size}`;
+    try {
+      const response = await CapacitorHttp.get({
+        url,
+        headers: { Accept: 'application/json' }
+      });
+
+      if (response.status < 200 || response.status >= 300) {
+        throw new Error(`[ApiService] Error HTTP ${response.status} al consultar las parcelas.`);
+      }
+
+      const body: unknown = response.data;
+      if (!isObject(body)
+        || typeof body['success'] !== 'boolean'
+        || typeof body['page'] !== 'number'
+        || typeof body['size'] !== 'number'
+        || typeof body['total'] !== 'number'
+        || typeof body['totalPages'] !== 'number'
+        || !Array.isArray(body['data'])
+        || !body['data'].every(isRegistroParcelaApiRecord)) {
+        throw new Error('[ApiService] La respuesta de parcelas no tiene el formato documentado.');
+      }
+
+      return {
+        success: body['success'],
+        data: body['data'],
+        page: body['page'],
+        size: body['size'],
+        total: body['total'],
+        totalPages: body['totalPages']
+      };
+    } catch (error) {
+      console.error('[ApiService] Error al leer parcelas del backend:', error);
+      throw error;
+    }
+  }
+
+  private buildRegistroPayload(payload: any): any {
+    const result: any = {};
+
+    if (payload && typeof payload.internal_key === 'string') {
+      result.internal_key = payload.internal_key.substring(0, 64);
+    } else {
+      throw new Error('[ApiService] El campo internal_key es obligatorio y debe ser un string de máximo 64 caracteres.');
+    }
+
+    if (payload && typeof payload.dni_productor === 'string' && /^\d{8}$/.test(payload.dni_productor)) {
+      result.dni_productor = payload.dni_productor;
+    } else if (payload && typeof payload.dni_productor === 'string') {
+      const numeric = Number(payload.dni_productor);
+      if (Number.isFinite(numeric) && numeric >= 0 && numeric <= 99999999) {
+        result.dni_productor = String(numeric).padStart(8, '0');
+      } else {
+        throw new Error('[ApiService] El campo dni_productor debe ser exactamente 8 dígitos.');
+      }
+    } else {
+      throw new Error('[ApiService] El campo dni_productor es obligatorio y debe tener 8 dígitos.');
+    }
+
+    if (payload && typeof payload.nombres === 'string') {
+      result.nombres = payload.nombres.substring(0, 100).trim();
+      if (result.nombres === '') {
+        throw new Error('[ApiService] El campo nombres no puede estar vacío.');
+      }
+    } else {
+      throw new Error('[ApiService] El campo nombres es obligatorio.');
+    }
+
+    if (payload && typeof payload.geom === 'string') {
+      result.geom = payload.geom.trim();
+      if (!result.geom.startsWith('POINT') && !result.geom.startsWith('LINESTRING') && !result.geom.startsWith('POLYGON')) {
+        throw new Error('[ApiService] El campo geom debe ser WKT válido (POINT, LINESTRING o POLYGON).');
+      }
+    } else {
+      throw new Error('[ApiService] El campo geom es obligatorio y debe ser WKT.');
+    }
+
+    const optionalFields = [
+      'codigo_autogenerado', 'apellido_paterno', 'apellido_materno', 'nombre_completo',
+      'fecha_nacimiento', 'sexo', 'celular_participante', 'tipo_productor',
+      'actividad_agraria', 'tipo_cultivo', 'variedad', 'regimen_tenencia',
+      'superficie_midagri', 'oficina_zonal', 'ubigeo', 'departamento', 'provincia',
+      'distrito', 'caserio', 'centroide', 'area_ha', 'perimetro_m', 'altitud',
+      'fuente', 'datum', 'observaciones',
+      'profesional_dni', 'profesional_nombres', 'profesional_apellidos',
+      'profesional_celular', 'profesional_email', 'ruta_dni_anverso', 'ruta_dni_reverso',
+      'ruta_foto1', 'ruta_foto2', 'ruta_foto3', 'ruta_foto4', 'ruta_foto5', 'ruta_foto6',
+      'device_uuid', 'fecha_captura', 'fecha_creacion', 'fecha_actualizacion', 'eliminado'
+    ];
+
+    for (const field of optionalFields) {
+      const value = payload[field];
+      if (value !== null && value !== undefined && value !== '') {
+        if (field === 'superficie_midagri' && typeof value === 'string') {
+          const num = Number(value);
+          if (Number.isFinite(num)) {
+            result[field] = num;
+          }
+        } else if (field === 'variedad') {
+          if (typeof value !== 'string' || value.trim().length > 2) {
+            throw new Error('[ApiService] El campo variedad admite como máximo 2 caracteres.');
+          }
+          result[field] = value.trim();
+        } else if (field === 'fecha_captura' || field === 'fecha_creacion' || field === 'fecha_actualizacion') {
+          if (typeof value === 'string') {
+            result[field] = this.normalizarFechaISO(value);
+          }
+        } else {
+          result[field] = value;
+        }
+      }
+    }
+
+    return toBackendJson(result);
+  }
+
+  private normalizarFechaISO(value: string): string {
+    if (/[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}/.test(value) && /Z|[+-][0-9]{2}:[0-9]{2}$/.test(value)) {
+      return value;
+    }
+
+    const timestamp = Date.parse(value);
+    if (!isNaN(timestamp)) {
+      return new Date(timestamp).toISOString();
+    }
+
+    const date = new Date(value);
+    if (!isNaN(date.getTime())) {
+      const offset = new Date().getTimezoneOffset();
+      const sign = offset > 0 ? '-' : '+';
+      const absOffset = Math.abs(offset);
+      const hours = String(Math.floor(absOffset / 60)).padStart(2, '0');
+      const minutes = String(absOffset % 60).padStart(2, '0');
+      return `${date.toISOString().slice(0, 19)}${sign}${hours}:${minutes}`;
+    }
+
+    return value;
   }
 }

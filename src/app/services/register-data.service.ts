@@ -66,13 +66,14 @@ export class RegisterDataService {
     MIDAGRI_DISTRITO: '',
     TIPO_PRODUCTOR: '',
     TIPO_CULTIVO: '',
+    VARIEDAD: '',
     UBIGEO_OFICINA_ZONAL: '',
     UBIGEO_DEPARTAMENTO: '',
     UBIGEO_PROVINCIA: '',
     UBIGEO_DISTRITO: '',
     UBIGEO_CASERIO: '',
     FUENTE: 'DEVIDA',
-    DATUM: 'WGS-84',
+    DATUM: 'WGS84',
     OBSERVACIONES: '',
     RUTA_DNI_FRONT: '',
     RUTA_DNI_BACK: '',
@@ -236,13 +237,14 @@ export class RegisterDataService {
       MIDAGRI_DISTRITO: '',
       TIPO_PRODUCTOR: '',
       TIPO_CULTIVO: '',
+      VARIEDAD: '',
       UBIGEO_OFICINA_ZONAL: '',
       UBIGEO_DEPARTAMENTO: '',
       UBIGEO_PROVINCIA: '',
       UBIGEO_DISTRITO: '',
       UBIGEO_CASERIO: '',
       FUENTE: 'DEVIDA',
-      DATUM: 'WGS-84',
+      DATUM: 'WGS84',
       OBSERVACIONES: '',
       RUTA_DNI_FRONT: '',
       RUTA_DNI_BACK: '',
@@ -259,7 +261,7 @@ export class RegisterDataService {
     const newFormData = {
       ...properties,
       FUENTE: properties.FUENTE || 'DEVIDA',
-      DATUM: properties.DATUM || 'WGS-84',
+      DATUM: properties.DATUM || 'WGS84',
       perimetro: currentForm.perimetro,
       area: currentForm.area,
       altitud: currentForm.altitud,
@@ -626,6 +628,7 @@ export class RegisterDataService {
 
     return !!(
       props.DNI && props.TIPO_PRODUCTOR &&
+      props.PROFESIONAL_DNI && /^\d{8}$/.test(props.PROFESIONAL_DNI) &&
       props.CELULAR_PARTICIPANTE &&
       props.TIPO_CULTIVO &&
       props.FECHA_NACIMIENTO && this.isOfLegalAge(props.FECHA_NACIMIENTO) &&
@@ -882,7 +885,7 @@ export class RegisterDataService {
       }
 
       console.log('[RegisterDataService] takePicture: Obteniendo coordenadas GPS para la foto...');
-      loading.message = 'Obteniendo las coordenadas GPS (hasta 3 s)...';
+      loading.message = 'Obteniendo las coordenadas GPS con precisión H/V (hasta 8 s)...';
       const position = await this.gpsAcquisitionService.getBestPositionForCapture();
 
       if (!isValidGpsAccuracy(position.coords.accuracy)) {

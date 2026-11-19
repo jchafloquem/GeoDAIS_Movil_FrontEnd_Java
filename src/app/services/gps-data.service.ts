@@ -57,6 +57,7 @@ export const GPS_ACCURACY_THRESHOLDS = {
   medium: 15,
   drawing: 10,
   photo: 15,
+  acceptable: 15,
 } as const;
 
 export function isReusableGpsPosition(
@@ -78,9 +79,21 @@ export function isGpsCaptureAccurateEnough(
   horizontalAccuracy: number | null | undefined,
   verticalAccuracy: number | null | undefined
 ): boolean {
+  // La precisión horizontal es obligatoria para completar la captura. La vertical es
+  // deseable pero no bloqueante: muchos receptores GNSS no reportan altitudeAccuracy
+  // o devuelven valores conservadores que impedirían capturar las coordenadas.
   return isValidGpsAccuracy(horizontalAccuracy) &&
-    horizontalAccuracy <= GPS_ACCURACY_THRESHOLDS.high &&
-    (!isValidGpsAccuracy(verticalAccuracy) || verticalAccuracy <= GPS_ACCURACY_THRESHOLDS.high);
+    horizontalAccuracy <= GPS_ACCURACY_THRESHOLDS.high;
+}
+
+export function isGpsPositionUsable(
+  accuracy: number | null | undefined
+): boolean {
+  // Umbral mínimo para aceptar una posición tras el timeout si no se alcanzó
+  // la precisión "high". Evita que la captura falle por completo en entornos
+  // con señal limitada.
+  return isValidGpsAccuracy(accuracy) &&
+    accuracy <= GPS_ACCURACY_THRESHOLDS.acceptable;
 }
 
 export type GpsAccuracyQuality = 'good' | 'medium' | 'bad';

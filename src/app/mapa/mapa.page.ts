@@ -54,7 +54,7 @@ import {
   walkOutline,
   wifiOutline, locateOutline } from 'ionicons/icons';
 import { exitOutline } from 'ionicons/icons';
-import { Geolocation, Position } from '@capacitor/geolocation';
+import { Position } from '@capacitor/geolocation';
 import { Filesystem, Directory, Encoding } from '@capacitor/filesystem';
 import { Preferences } from '@capacitor/preferences';
 import { RouterLink } from '@angular/router';
@@ -281,9 +281,6 @@ export class MapaPage implements OnDestroy {
       this.gpsSubscription.unsubscribe();
     }
 
-    if (this.watchId) {
-      Geolocation.clearWatch({ id: this.watchId });
-    }
     if (this.map) {
       // Limpiamos el intervalo para evitar fugas de memoria
       if (this.pulseInterval) {
@@ -592,20 +589,24 @@ export class MapaPage implements OnDestroy {
     // 2. Inicializar nueva polilínea para los bordes
     this.walkingPolyline = L.polyline([], { color: '#ff0000', weight: 3 }).addTo(this.map);
 
-    // 3. Opciones para el seguimiento GPS
+    // 3. Opciones para el seguimiento GPS (solo se usa como fallback si el servicio no está activo)
     const watchOptions = {
       enableHighAccuracy: true,
       timeout: 10000,
       maximumAge: 0,
+      minimumUpdateInterval: 0,
     };
 
     this.isLoading = true;
     try {
-      // 4. Usar la última posición conocida del GPS como punto de partida.
+      // 4. Asegurar que el servicio de GPS esté activo (un único watch para toda la app)
+      await this.gpsAcquisitionService.startGpsWatch();
+
+      // 5. Usar la última posición conocida del GPS como punto de partida.
       // Esto evita la espera y el posible timeout de getCurrentPosition.
       const initialPoint = L.latLng(this.gpsData.lat, this.gpsData.lng);
 
-      // 5. Crear o mover la "mira" (crosshair) a esa posición inicial
+      // 6. Crear o mover la "mira" (crosshair) a esa posición inicial
       if (!this.crosshairMarker) {
         const crosshairIcon = L.divIcon({
           className: 'crosshair-icon',
@@ -625,30 +626,13 @@ export class MapaPage implements OnDestroy {
       }
       this.map.panTo(initialPoint);
 
-      // 6. Ahora, iniciar el seguimiento continuo para actualizar la posición de la mira
-      this.watchId = await Geolocation.watchPosition(watchOptions, (position, err) => {
-        if (err || !position) {
-          this.toggleDrawingMode(); // Detener si hay un error de GPS
-          this.registerDataService.showToast('Error de GPS al dibujar. Intente de nuevo.', 'danger', 'top');
+      // 7. Suscribirse al flujo de posiciones del servicio de GPS (un único watch centralizado)
+      const subscription = this.gpsDataService.currentGpsData.subscribe(gps => {
+        if (gps.lat === null || gps.lng === null) {
           return;
         }
-
-        const { latitude, longitude, accuracy } = position.coords;
-        if (
-          !Number.isFinite(latitude) ||
-          latitude < -90 ||
-          latitude > 90 ||
-          !Number.isFinite(longitude) ||
-          longitude < -180 ||
-          longitude > 180
-        ) {
-          this.drawingAccuracy = null;
-          console.warn('[MapaPage] Se descartó una posición GPS inválida durante el dibujo.');
-          return;
-        }
-
-        this.drawingAccuracy = isValidGpsAccuracy(accuracy) ? accuracy : null;
-        const newPoint = L.latLng(latitude, longitude);
+        this.drawingAccuracy = isValidGpsAccuracy(gps.accH) ? gps.accH : null;
+        const newPoint = L.latLng(gps.lat, gps.lng);
 
         if (this.crosshairMarker) {
           this.crosshairMarker.setLatLng(newPoint);
@@ -664,6 +648,9 @@ export class MapaPage implements OnDestroy {
         }
         this.map.panTo(newPoint);
       });
+
+      // Guardar la suscripción para poder cancelarla al detener el dibujo
+      (this as any).gpsDrawingSubscription = subscription;
     } catch (e) {
       // Si falla (ej. permisos denegados), revertir el estado y limpiar
       if (this.isDrawingPolygon) {
@@ -678,10 +665,6 @@ export class MapaPage implements OnDestroy {
   private stopDrawingByWalking() {
     // 1. Detener seguimiento de ubicación
     this.drawingAccuracy = null;
-    if (this.watchId) {
-      Geolocation.clearWatch({ id: this.watchId });
-      this.watchId = null;
-    }
 
     // 2. Convertir a polígono si es válido
     if (this.polygonVertices.length > 2) {
@@ -705,6 +688,13 @@ export class MapaPage implements OnDestroy {
       }
     }
 
+    // 3. Cancelar suscripción al flujo de GPS del modo dibujo
+    const sub = (this as any).gpsDrawingSubscription;
+    if (sub) {
+      sub.unsubscribe();
+      (this as any).gpsDrawingSubscription = null;
+    }
+
     // 3. Limpiar elementos temporales del mapa
     if (this.walkingPolyline) {
       this.map.removeLayer(this.walkingPolyline);
@@ -719,10 +709,11 @@ export class MapaPage implements OnDestroy {
   }
 
   private stopDrawingLine() {
-    // 1. Detener seguimiento de ubicación
-    if (this.watchId) {
-      Geolocation.clearWatch({ id: this.watchId });
-      this.watchId = null;
+    // 1. Cancelar suscripción al flujo de GPS del modo dibujo
+    const sub = (this as any).gpsDrawingSubscription;
+    if (sub) {
+      sub.unsubscribe();
+      (this as any).gpsDrawingSubscription = null;
     }
 
     // 2. Convertir a línea si es válido (al menos 2 puntos)
@@ -760,7 +751,7 @@ export class MapaPage implements OnDestroy {
       return;
     }
 
-    this.gpsLoadingMessage = 'Obteniendo una lectura GPS reciente; si hace falta, midiendo precisión H/V (hasta 3 s)...';
+    this.gpsLoadingMessage = 'Obteniendo lectura GPS con precisión H/V (hasta 8 s)...';
     this.isLoading = true;
     let position: Position;
     try {
@@ -778,7 +769,19 @@ export class MapaPage implements OnDestroy {
       this.gpsLoadingMessage = 'Obteniendo Geolocalización...';
     }
 
-    const { latitude, longitude, altitude } = position.coords;
+    const { latitude, longitude, altitude, accuracy, altitudeAccuracy } = position.coords;
+    const accH = isValidGpsAccuracy(accuracy) ? accuracy : null;
+    const accV = isValidGpsAccuracy(altitudeAccuracy) ? altitudeAccuracy : null;
+
+    // Mensaje de retroalimentación de precisión al usuario
+    const accHText = accH !== null ? `±${accH.toFixed(1)} m` : 'no reportada';
+    const accVText = accV !== null ? `±${accV.toFixed(1)} m` : 'no reportada';
+    await this.registerDataService.showToast(
+      `Punto capturado.\nPrecisión H: ${accHText}\nPrecisión V: ${accVText}`,
+      'success',
+      'middle'
+    );
+
     const pointGeoJSON = {
       type: 'Feature',
       properties: {},

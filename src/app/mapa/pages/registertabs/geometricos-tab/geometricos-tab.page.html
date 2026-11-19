@@ -44,6 +44,12 @@
             </ion-select>
           </ion-item>
           <ion-item>
+            <ion-input label="Variedad" label-placement="stacked" maxlength="2"
+                       [ngModel]="formData.VARIEDAD"
+                       (ngModelChange)="formData.VARIEDAD = $event"
+                       [disabled]="!!formData.uploaded"></ion-input>
+          </ion-item>
+          <ion-item>
             <ion-input label="Oficina Zonal" label-placement="stacked"
                        [ngModel]="formData.UBIGEO_OFICINA_ZONAL"
                        (ngModelChange)="formData.UBIGEO_OFICINA_ZONAL = $event"

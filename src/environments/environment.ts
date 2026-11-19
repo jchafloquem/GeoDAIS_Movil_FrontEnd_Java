@@ -6,8 +6,9 @@ export const environment = {
   production: false,
   // Para EMULADOR usa: http://10.0.2.2:3000/api
   // Para DISPOSITIVO FÍSICO (celular) usa la IP de tu computadora en la red WiFi.
-  //apiUrl: 'http://192.168.26.12:3000',
-  apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
+  //apiUrl: 'http://localhost:8080',
+  apiUrl: 'http://192.168.26.16:8080',
+  //apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
   firebase: {
       apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
       authDomain: "geomovildais.firebaseapp.com",

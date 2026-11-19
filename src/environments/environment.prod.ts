@@ -1,6 +1,7 @@
 export const environment = {
   production: true,
-  apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
+  //apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
+  apiUrl: 'http://192.168.26.16:8080',
   firebase: {
     apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",
     authDomain: "geomovildais.firebaseapp.com",

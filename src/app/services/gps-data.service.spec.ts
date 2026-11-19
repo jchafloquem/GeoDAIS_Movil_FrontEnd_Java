@@ -1,8 +1,13 @@
+declare const describe: any;
+declare const it: any;
+declare const expect: any;
+
 import {
   getGpsAccuracyQuality,
   isBetterHorizontalPosition,
   isBetterVerticalPosition,
   isGpsCaptureAccurateEnough,
+  isGpsPositionUsable,
   isReusableGpsPosition,
   isValidGpsAccuracy,
 } from './gps-data.service';
@@ -38,11 +43,19 @@ describe('GPS accuracy', () => {
     expect(isReusableGpsPosition({ ...position, coords: { ...position.coords, accuracy: 16 } }, 2000, 1500)).toBeFalse();
   });
 
-  it('allows an early GPS capture only when horizontal and reported vertical accuracy are high', () => {
+  it('allows an early GPS capture when horizontal accuracy is high (vertical is desirable but not blocking)', () => {
     expect(isGpsCaptureAccurateEnough(5, 5)).toBeTrue();
     expect(isGpsCaptureAccurateEnough(4, null)).toBeTrue();
+    expect(isGpsCaptureAccurateEnough(4, 5.1)).toBeTrue();
     expect(isGpsCaptureAccurateEnough(5.1, null)).toBeFalse();
-    expect(isGpsCaptureAccurateEnough(4, 5.1)).toBeFalse();
+    expect(isGpsCaptureAccurateEnough(null, 2)).toBeFalse();
+  });
+
+  it('accepts a position as usable when accuracy is within the acceptable threshold', () => {
+    expect(isGpsPositionUsable(10)).toBeTrue();
+    expect(isGpsPositionUsable(15)).toBeTrue();
+    expect(isGpsPositionUsable(15.1)).toBeFalse();
+    expect(isGpsPositionUsable(null)).toBeFalse();
   });
 
   it('selects the most accurate horizontal sample and prefers the newer sample on a tie', () => {

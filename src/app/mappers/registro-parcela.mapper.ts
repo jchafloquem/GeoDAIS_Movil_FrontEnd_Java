@@ -1,9 +1,9 @@
 import { LocalRegisterProperties, RegistroParcelaApiPayload } from '../interfaces/register-data.interfaces';
-import { PolygonGeometry, polygonCentroidWkt, polygonToWktZ } from '../services/parcel-geometry';
+import { ParcelGeometry, geometryCentroidWkt, geometryToWktZ } from '../services/parcel-geometry';
 
 export function toRegistroParcelaApiPayload(
   properties: Partial<LocalRegisterProperties>,
-  geometry: PolygonGeometry,
+  geometry: ParcelGeometry,
   now: Date = new Date()
 ): RegistroParcelaApiPayload {
   const fechaCaptura = toIsoTimestamp(properties.FECHA_CREACION_REGISTRO);
@@ -23,16 +23,17 @@ export function toRegistroParcelaApiPayload(
     tipo_productor: optionalText(properties.TIPO_PRODUCTOR),
     actividad_agraria: optionalText(properties.ACTIVIDAD_AGRARIA),
     tipo_cultivo: optionalText(properties.TIPO_CULTIVO),
+    variedad: optionalText(properties.VARIEDAD),
     regimen_tenencia: optionalText(properties.REGIMEN_TENENCIA),
-    superficie_midagri: parseNumeric(properties.SUPERFICIE_MIDAGRI),
+    superficie_midagri: parsePositiveNumeric(properties.SUPERFICIE_MIDAGRI),
     oficina_zonal: optionalText(properties.UBIGEO_OFICINA_ZONAL),
     ubigeo: normalizeUbigeo(properties.UBIGEO_DISTRITO),
     departamento: optionalText(properties.TXT_DEPARTAMENTO || properties.MIDAGRI_DEPARTAMENTO),
     provincia: optionalText(properties.TXT_PROVINCIA || properties.MIDAGRI_PROVINCIA),
     distrito: optionalText(properties.TXT_DISTRITO || properties.MIDAGRI_DISTRITO),
     caserio: optionalText(properties.CASERIO || properties.UBIGEO_CASERIO),
-    geom: polygonToWktZ(geometry, parseNumeric(properties.altitud) ?? 0),
-    centroide: polygonCentroidWkt(geometry),
+    geom: geometryToWktZ(geometry, parseNumeric(properties.altitud) ?? 0),
+    centroide: geometryCentroidWkt(geometry),
     area_ha: parseNumeric(properties.area),
     perimetro_m: parseNumeric(properties.perimetro),
     altitud: parseNumeric(properties.altitud),
@@ -60,6 +61,11 @@ export function toRegistroParcelaApiPayload(
     fecha_actualizacion: toIsoTimestamp(properties.FECHA_ACTUALIZACION_REGISTRO) || fechaCreacion,
     eliminado: properties.ELIMINADO ?? false
   };
+}
+
+function parsePositiveNumeric(value: string | number | null | undefined): number | null {
+  const number = parseNumeric(value);
+  return number !== null && number > 0 ? number : null;
 }
 
 function parseNumeric(value: string | number | null | undefined): number | null {

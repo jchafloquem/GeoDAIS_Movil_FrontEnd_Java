@@ -1,4 +1,10 @@
-import { ApiService, toBackendJson } from './api.service';
+import {
+  ApiService,
+  assertBackendPhotoReferences,
+  getPhotoUploadUrl,
+  normalizePhotoReference,
+  toBackendJson
+} from './api.service';
 
 describe('toBackendJson', () => {
   it('converts table field names to the Java DTO properties without dropping values', () => {
@@ -74,5 +80,31 @@ describe('ApiService participant identity lookup', () => {
     expect(apiService.getParticipanteData).toHaveBeenCalledWith('87654321');
     expect(reniecSpy).toHaveBeenCalledWith('87654321');
     expect(result).toEqual({ data: reniecData, source: 'RENIEC' });
+  });
+});
+
+describe('ApiService photo upload', () => {
+  it('rejects local device URIs from outgoing photo fields', () => {
+    expect(() => assertBackendPhotoReferences({
+      ruta_dni_reverso: 'file:///data/user/0/app/files/dni_back.jpeg'
+    })).toThrowError(/referencia del backend/);
+  });
+
+  it('uses the photo endpoint under the configured backend context', () => {
+    expect(getPhotoUploadUrl('http://192.168.26.16:8080'))
+      .toBe('http://192.168.26.16:8080/geodaismovil/api/fotos');
+    expect(getPhotoUploadUrl('https://sistemas.devida.gob.pe/geodaismovil/'))
+      .toBe('https://sistemas.devida.gob.pe/geodaismovil/api/fotos');
+  });
+
+  it('normalizes the returned photo URL to the host used by the app', () => {
+    const photoId = '550e8400-e29b-41d4-a716-446655440000';
+    const uploadUrl = getPhotoUploadUrl('http://192.168.26.16:8080');
+    const reference = normalizePhotoReference(
+      `http://localhost:8080/geodaismovil/api/fotos/${photoId}`,
+      uploadUrl
+    );
+
+    expect(reference).toBe(`http://192.168.26.16:8080/geodaismovil/api/fotos/${photoId}`);
   });
 });

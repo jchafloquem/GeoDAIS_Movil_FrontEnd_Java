@@ -1,12 +1,12 @@
-<ion-content [fullscreen]="true" class="productor-content">
+<ion-content class="productor-content">
   <ng-container *ngIf="registerDataService.formData$ | async as formData">
     <ion-card class="productor-card">
-      <ion-card-header color="primary">
-        <ion-card-title color="white" class="productor-card-title">
+      <ion-card-header>
+        <ion-card-title class="productor-card-title">
           Datos del Productor
           <ion-icon *ngIf="formData.uploaded" name="lock-closed" aria-label="Registro bloqueado"></ion-icon>
         </ion-card-title>
-        <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
+        <ion-card-subtitle>Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
       </ion-card-header>
       <ion-card-content>
         <ion-list lines="none">

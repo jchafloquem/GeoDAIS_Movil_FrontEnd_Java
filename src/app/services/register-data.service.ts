@@ -12,6 +12,7 @@ import { LocalNotifications } from '@capacitor/local-notifications';
 import * as L from 'leaflet';
 
 import { ApiService } from './api.service';
+import type { PhotoUploadKind } from './api.service';
 import type { MidagriProductor, ReniecResponse } from '../interfaces/api.interfaces';
 import { GpsDataService, isValidGpsAccuracy } from './gps-data.service';
 import { GpsAcquisitionService } from './gps-acquisition.service';
@@ -537,6 +538,7 @@ export class RegisterDataService {
       PROFESIONAL_EMAIL: professionalProfile.email || null,
       DEVICE_UUID: deviceId.identifier,
       RUTA_FOTOS: this._savedPhotoUris.getValue(),
+      RUTA_FOTOS_API: this._savedPhotoUris.getValue().map((_, index) => formData.RUTA_FOTOS_API?.[index] ?? null),
       uploaded: false // Al guardar o editar, marcamos como NO subido para permitir el envío
     };
 
@@ -623,9 +625,12 @@ export class RegisterDataService {
 
       try {
         const props = record.properties as LocalRegisterProperties;
+        loading.message = `Preparando fotos ${i + 1} de ${recordsToSend.length}...`;
+        await this.preparePhotoReferences(record);
         const geometry = record.geometry as { type: string; coordinates: unknown };
         const payload = toRegistroParcelaApiPayload(props, geometry);
 
+        loading.message = `Enviando ${i + 1} de ${recordsToSend.length}...`;
         const response = await this.apiService.enviarRegistroIndividual(payload);
 
         if (response.status >= 200 && response.status < 300) {
@@ -899,6 +904,103 @@ export class RegisterDataService {
 
   // --- Lógica de Fotos ---
 
+  private async preparePhotoReferences(record: GeoJSONFeature): Promise<void> {
+    const properties = record.properties;
+    const recordKey = properties.INTERNAL_KEY || properties.internal_key;
+    if (!recordKey) {
+      throw new Error('No se pudo identificar el registro para preparar sus fotos.');
+    }
+    const producerDni = properties.DNI;
+    if (typeof producerDni !== 'string' || !/^\d{8}$/.test(producerDni)) {
+      throw new Error('El DNI del productor debe tener 8 dígitos para identificar las fotos.');
+    }
+
+    const uploadReference = async (
+      localUri: string | null | undefined,
+      cachedReference: string | null | undefined,
+      photoLabel: string,
+      photoKind: PhotoUploadKind
+    ): Promise<string | null> => {
+      if (!localUri) return null;
+      if (cachedReference && /^https?:\/\//i.test(cachedReference)) return cachedReference;
+      if (/^https?:\/\//i.test(localUri)) return localUri;
+      if (!localUri.startsWith('file://')) {
+        throw new Error(`La ruta de ${photoLabel} no es una foto local compatible.`);
+      }
+
+      const file = await Filesystem.readFile({ path: localUri });
+      if (typeof file.data !== 'string' || !file.data) {
+        throw new Error(`No se pudo leer el archivo de ${photoLabel}.`);
+      }
+      const base64Data = file.data.replace(/^data:image\/[a-z0-9.+-]+;base64,/i, '');
+      const reference = await this.apiService.uploadPhoto(base64Data, producerDni, photoKind);
+      if (!/^https?:\/\//i.test(reference)) {
+        throw new Error(`El backend devolvió una referencia inválida para ${photoLabel}.`);
+      }
+      return reference;
+    };
+
+    const persist = async () => {
+      await Preferences.set({ key: recordKey, value: JSON.stringify(record) });
+    };
+
+    const dniPhotos: Array<{
+      localUri: string | null | undefined;
+      cachedReference: string | null | undefined;
+      cache: (reference: string | null) => void;
+      label: string;
+      photoKind: PhotoUploadKind;
+    }> = [
+      {
+        localUri: properties.RUTA_DNI_FRONT,
+        cachedReference: properties.RUTA_DNI_FRONT_API,
+        cache: reference => { properties.RUTA_DNI_FRONT_API = reference; },
+        label: 'el anverso del DNI',
+        photoKind: 'dni_anverso'
+      },
+      {
+        localUri: properties.RUTA_DNI_BACK,
+        cachedReference: properties.RUTA_DNI_BACK_API,
+        cache: reference => { properties.RUTA_DNI_BACK_API = reference; },
+        label: 'el reverso del DNI',
+        photoKind: 'dni_reverso'
+      }
+    ];
+
+    for (const photo of dniPhotos) {
+      const reference = await uploadReference(
+        photo.localUri, photo.cachedReference, photo.label, photo.photoKind
+      );
+      if (reference !== photo.cachedReference) {
+        photo.cache(reference);
+        await persist();
+      }
+    }
+
+    const localPhotos = properties.RUTA_FOTOS || [];
+    const cachedPhotoReferences = [...(properties.RUTA_FOTOS_API || [])].slice(0, localPhotos.length);
+    const additionalPhotoKinds: PhotoUploadKind[] = ['foto1', 'foto2', 'foto3', 'foto4', 'foto5', 'foto6'];
+    for (let index = 0; index < localPhotos.length; index++) {
+      const cachedReference = cachedPhotoReferences[index] ?? null;
+      const reference = await uploadReference(
+        localPhotos[index],
+        cachedReference,
+        `la foto ${index + 1}`,
+        additionalPhotoKinds[index]
+      );
+      if (reference !== cachedReference) {
+        cachedPhotoReferences[index] = reference;
+        properties.RUTA_FOTOS_API = cachedPhotoReferences;
+        await persist();
+      }
+    }
+
+    if (properties.RUTA_FOTOS_API && properties.RUTA_FOTOS_API.length !== localPhotos.length) {
+      properties.RUTA_FOTOS_API = cachedPhotoReferences;
+      await persist();
+    }
+  }
+
   public async takePicture() {
     // BLOQUEO DE EDICIÓN
     if (this._formData.getValue().uploaded) {
@@ -1034,6 +1136,12 @@ export class RegisterDataService {
             displayPhotos.splice(index, 1);
             this._savedPhotoUris.next(uris);
             this._photosForDisplay.next(displayPhotos);
+            const formData = this._formData.getValue();
+            if (formData.RUTA_FOTOS_API) {
+              const apiPhotoReferences = [...formData.RUTA_FOTOS_API];
+              apiPhotoReferences.splice(index, 1);
+              this._formData.next({ ...formData, RUTA_FOTOS_API: apiPhotoReferences });
+            }
           }
         }
       ]
@@ -1123,8 +1231,10 @@ export class RegisterDataService {
       // Actualizamos el estado del formulario con el URI completo y correcto
       if (side === 'front') {
         currentFormData.RUTA_DNI_FRONT = savedFile.uri;
+        currentFormData.RUTA_DNI_FRONT_API = null;
       } else {
         currentFormData.RUTA_DNI_BACK = savedFile.uri;
+        currentFormData.RUTA_DNI_BACK_API = null;
       }
       this._formData.next(currentFormData);
 
@@ -1159,8 +1269,10 @@ export class RegisterDataService {
 
       if (side === 'front') {
         currentFormData.RUTA_DNI_FRONT = '';
+        currentFormData.RUTA_DNI_FRONT_API = null;
       } else {
         currentFormData.RUTA_DNI_BACK = '';
+        currentFormData.RUTA_DNI_BACK_API = null;
       }
       this._formData.next(currentFormData);
     }

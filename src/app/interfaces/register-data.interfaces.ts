@@ -174,6 +174,9 @@ export interface LocalRegisterProperties {
   RUTA_FOTOS: string[];
   RUTA_DNI_FRONT: string;
   RUTA_DNI_BACK: string;
+  RUTA_DNI_FRONT_API?: string | null;
+  RUTA_DNI_BACK_API?: string | null;
+  RUTA_FOTOS_API?: Array<string | null>;
   status?: 'draft' | 'pending';
   syncStatus?: 'pending';
   perimetro?: string;

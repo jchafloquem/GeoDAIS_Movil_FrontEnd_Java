@@ -10,6 +10,16 @@ import type {
 import type { RegistroParcelaApiPage, RegistroParcelaApiRecord } from '../interfaces/register-data.interfaces';
 import { environment } from '../../environments/environment';
 
+export type PhotoUploadKind =
+  | 'dni_anverso'
+  | 'dni_reverso'
+  | 'foto1'
+  | 'foto2'
+  | 'foto3'
+  | 'foto4'
+  | 'foto5'
+  | 'foto6';
+
 function isObject(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null;
 }
@@ -34,6 +44,42 @@ export function toBackendJson(payload: Record<string, unknown>): Record<string, 
     backendPayload[backendField] = value;
   }
   return backendPayload;
+}
+
+export function assertBackendPhotoReferences(payload: Record<string, unknown>): void {
+  const photoFields = [
+    'ruta_dni_anverso', 'ruta_dni_reverso',
+    'ruta_foto1', 'ruta_foto2', 'ruta_foto3', 'ruta_foto4', 'ruta_foto5', 'ruta_foto6'
+  ];
+  for (const field of photoFields) {
+    const value = payload[field];
+    if (typeof value === 'string' && /^(file|content):\/\//i.test(value)) {
+      throw new Error(`[ApiService] ${field} debe ser una referencia del backend, no una ruta local del dispositivo.`);
+    }
+  }
+}
+
+export function getPhotoUploadUrl(apiUrl: string): string {
+  const baseUrl = apiUrl.replace(/\/+$/, '');
+  const photosPath = baseUrl.endsWith('/geodaismovil')
+    ? `${baseUrl}/api/fotos`
+    : `${baseUrl}/geodaismovil/api/fotos`;
+  return photosPath;
+}
+
+export function normalizePhotoReference(reference: unknown, uploadUrl: string): string {
+  if (typeof reference !== 'string') {
+    throw new Error('[ApiService] El backend no devolvió la referencia de la foto.');
+  }
+
+  const responseUrl = new URL(reference, uploadUrl);
+  const photoId = responseUrl.pathname.match(/\/geodaismovil\/api\/fotos\/([0-9a-f-]{36})$/i)?.[1];
+  if (!photoId) {
+    throw new Error('[ApiService] El backend devolvió una referencia de foto inválida.');
+  }
+
+  const requestUrl = new URL(uploadUrl);
+  return `${requestUrl.origin}${requestUrl.pathname}/${photoId}`;
 }
 
 function isOptionalString(value: unknown): boolean {
@@ -232,6 +278,23 @@ export class ApiService {
     }
   }
 
+  async uploadPhoto(base64Data: string, dniProductor: string, photoKind: PhotoUploadKind): Promise<string> {
+    const url = getPhotoUploadUrl(environment.apiUrl);
+    const response = await CapacitorHttp.post({
+      url,
+      data: { data: base64Data, dniProductor, photoKind },
+      headers: { 'Content-Type': 'application/json', Accept: 'application/json' }
+    });
+
+    if (response.status < 200 || response.status >= 300) {
+      throw new Error(`[ApiService] Error HTTP ${response.status} al cargar la foto.`);
+    }
+
+    const body: unknown = response.data;
+    const reference = isObject(body) ? body['reference'] : undefined;
+    return normalizePhotoReference(reference, url);
+  }
+
   async listarParcelas(page = 0, size = 50): Promise<RegistroParcelaApiPage> {
     if (!Number.isInteger(page) || page < 0 || !Number.isInteger(size) || size < 1 || size > 100) {
       throw new Error('[ApiService] La paginación debe tener page >= 0 y size entre 1 y 100.');
@@ -350,6 +413,7 @@ export class ApiService {
       }
     }
 
+    assertBackendPhotoReferences(result);
     return toBackendJson(result);
   }
 

@@ -3,7 +3,6 @@
 }
 
 .productor-content {
-  --padding-bottom: calc(env(safe-area-inset-bottom) + 88px);
   --background: #eef5f0;
 }
 
@@ -17,9 +16,16 @@
 
 .productor-card-header,
 ion-card-header {
+  --background: linear-gradient(105deg, #063a2a 0%, #075235 58%, #0b7540 100%);
+  --color: #fff;
   color: white;
-  background: linear-gradient(105deg, #063a2a 0%, #075235 58%, #0b7540 100%);
   border-bottom: 1px solid rgba(199, 245, 140, 0.35);
+
+  ion-card-title,
+  ion-card-subtitle {
+    --color: #fff;
+    color: #fff;
+  }
 }
 
 .productor-card-title {

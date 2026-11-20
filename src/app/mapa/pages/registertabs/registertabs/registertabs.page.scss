@@ -1,11 +1,10 @@
 ion-header {
+  position: relative;
   background: transparent;
-  pointer-events: none;
   z-index: 20;
 }
 
 ion-toolbar {
-  pointer-events: auto;
   --background: #063a2a;
   --border-width: 0;
   --color: #fff;
@@ -93,9 +92,8 @@ ion-toolbar {
 
 .register-tabs-content {
   --background: #eef5f0;
-}
-
-ion-tabs {
+  top: calc(58px + var(--ion-safe-area-top, env(safe-area-inset-top, 0px)));
+  height: auto;
   background: #eef5f0;
 }
 

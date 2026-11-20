@@ -1,12 +1,12 @@
 <ion-content class="geometricos-content">
   <ng-container *ngIf="registerDataService.formData$ | async as formData">
     <ion-card class="geometricos-card">
-      <ion-card-header color="primary">
-        <ion-card-title color="white" class="tab-card-title">
+      <ion-card-header>
+        <ion-card-title class="tab-card-title">
           Datos Geométricos
           <ion-icon *ngIf="formData.uploaded" name="lock-closed" aria-label="Registro bloqueado"></ion-icon>
         </ion-card-title>
-          <ion-card-subtitle color="white">Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
+          <ion-card-subtitle>Fuente: LEVANTAMIENTO EN CAMPO</ion-card-subtitle>
         <div class="header-container">
           <ion-chip *ngIf="formData.geometryTypeLabel" outline="true" class="geometry-chip">
             <ion-icon [name]="geometryIcons[formData.geometryTypeLabel] || 'shapes-outline'" aria-hidden="true"></ion-icon>

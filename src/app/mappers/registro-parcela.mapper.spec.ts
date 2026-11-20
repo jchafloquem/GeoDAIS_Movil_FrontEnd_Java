@@ -66,6 +66,26 @@ describe('toRegistroParcelaApiPayload', () => {
     expect(payload.fecha_actualizacion).toBe(payload.fecha_creacion);
   });
 
+  it('uses backend photo URLs instead of local device file URIs', () => {
+    const properties: Partial<LocalRegisterProperties> = {
+      DNI: '12345678',
+      NOMBRES: 'ANA',
+      RUTA_DNI_FRONT: 'file:///data/user/0/app/files/dni_front.jpeg',
+      RUTA_DNI_FRONT_API: 'https://api.example.test/geodaismovil/api/fotos/550e8400-e29b-41d4-a716-446655440000',
+      RUTA_DNI_BACK: 'file:///data/user/0/app/files/dni_back.jpeg',
+      RUTA_DNI_BACK_API: 'https://api.example.test/geodaismovil/api/fotos/550e8400-e29b-41d4-a716-446655440001',
+      RUTA_FOTOS: ['file:///data/user/0/app/files/photo.jpeg'],
+      RUTA_FOTOS_API: ['https://api.example.test/geodaismovil/api/fotos/550e8400-e29b-41d4-a716-446655440002']
+    };
+
+    const payload = toRegistroParcelaApiPayload(properties, geometry);
+
+    expect(payload.ruta_dni_anverso).toBe(properties.RUTA_DNI_FRONT_API);
+    expect(payload.ruta_dni_reverso).toBe(properties.RUTA_DNI_BACK_API);
+    expect(payload.ruta_foto1).toBe(properties.RUTA_FOTOS_API?.[0]);
+    expect(Object.values(payload).some(value => typeof value === 'string' && value.startsWith('file://'))).toBeFalse();
+  });
+
   it('maps saved points and lines to the WKT expected by the backend', () => {
     const properties: Partial<LocalRegisterProperties> = {
       INTERNAL_KEY: 'point-key',

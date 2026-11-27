@@ -1032,7 +1032,7 @@ export class RegisterDataService {
       }
 
       console.log('[RegisterDataService] takePicture: Obteniendo coordenadas GPS para la foto...');
-      loading.message = 'Obteniendo las coordenadas GPS con precisión H/V (hasta 8 s)...';
+      loading.message = 'Obteniendo las coordenadas GPS con precisión H/V (hasta 5 s)...';
       const position = await this.gpsAcquisitionService.getBestPositionForCapture();
 
       if (!isValidGpsAccuracy(position.coords.accuracy)) {

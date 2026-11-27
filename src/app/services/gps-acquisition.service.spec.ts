@@ -1,4 +1,4 @@
-import { TestBed } from '@angular/core/testing';
+import { fakeAsync, flushMicrotasks, TestBed, tick } from '@angular/core/testing';
 import { GeolocationPlugin, Position, WatchPositionCallback } from '@capacitor/geolocation';
 import { ToastController } from '@ionic/angular/standalone';
 import { GPS_GEOLOCATION, GpsAcquisitionService } from './gps-acquisition.service';
@@ -156,6 +156,24 @@ describe('GpsAcquisitionService', () => {
     });
     subscription.unsubscribe();
   });
+
+  it('ends a temporary capture after five seconds without a valid position', fakeAsync(() => {
+    geolocation.watchPosition.and.resolveTo('capture-watch');
+    let errorMessage: string | undefined;
+
+    void service.getBestPositionForCapture().catch(error => {
+      errorMessage = error.message;
+    });
+    flushMicrotasks();
+
+    tick(4999);
+    expect(errorMessage).toBeUndefined();
+
+    tick(1);
+    flushMicrotasks();
+    expect(errorMessage).toBe('No se recibieron coordenadas GPS válidas en el tiempo de captura.');
+    expect(geolocation.clearWatch).toHaveBeenCalledWith({ id: 'capture-watch' });
+  }));
 
   it('rejects capture when location permission remains denied', async () => {
     const deniedPermissions = {

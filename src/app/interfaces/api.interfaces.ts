@@ -21,21 +21,22 @@ export interface PersonaIdentityResult {
 }
 
 export interface MidagriProductor {
-  txt_codigoautogenerado: string;
-  fec_registro: string;
-  txt_actagraria: string;
-  num_superficie: string;
-  txt_regtenencia: string;
-  txt_sexo: string;
-  txt_departamento: string;
-  txt_provincia: string;
-  txt_distrito: string;
+  [key: string]: unknown;
+  txt_codigoautogenerado?: string;
+  fec_registro?: string;
+  txt_actagraria?: string;
+  num_superficie?: string;
+  txt_regtenencia?: string;
+  txt_sexo?: string;
+  txt_departamento?: string;
+  txt_provincia?: string;
+  txt_distrito?: string;
 }
 
 export interface MidagriApiResponse {
-  result: MidagriProductor | MidagriProductor[] | null;
+  result: unknown;
   targetUrl: string | null;
   success: boolean;
-  error: any | null;
+  error: unknown;
   unAuthorizedRequest: boolean;
 }

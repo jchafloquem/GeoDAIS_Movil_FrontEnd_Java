@@ -2,6 +2,7 @@ import {
   ApiService,
   assertBackendPhotoReferences,
   getPhotoUploadUrl,
+  normalizeMidagriProductor,
   normalizePhotoReference,
   toBackendJson
 } from './api.service';
@@ -80,6 +81,48 @@ describe('ApiService participant identity lookup', () => {
     expect(apiService.getParticipanteData).toHaveBeenCalledWith('87654321');
     expect(reniecSpy).toHaveBeenCalledWith('87654321');
     expect(result).toEqual({ data: reniecData, source: 'RENIEC' });
+  });
+});
+
+describe('normalizeMidagriProductor', () => {
+  it('maps the PPA code from differently cased or formatted response fields', () => {
+    expect(normalizeMidagriProductor({
+      TXT_CODIGO_PPA: 'PPA-00123'
+    })?.txt_codigoautogenerado).toBe('PPA-00123');
+
+    expect(normalizeMidagriProductor({
+      txt_codigoautogenerado: '',
+      codigo_ppa: 'PPA-00456'
+    })?.txt_codigoautogenerado).toBe('PPA-00456');
+  });
+
+  it('preserves the rest of the MIDAGRI response while mapping display fields', () => {
+    expect(normalizeMidagriProductor({
+      fec_registro: '2025-03-10',
+      txt_actagraria: 'CAFÉ',
+      num_superficie: '2.5',
+      txt_regtenencia: 'PROPIO',
+      txt_sexo: 'M',
+      txt_departamento: 'CUSCO',
+      txt_provincia: 'LA CONVENCIÓN',
+      txt_distrito: 'SANTA ANA',
+      additional_data: 'preserved'
+    })).toEqual(jasmine.objectContaining({
+      fec_registro: '2025-03-10',
+      txt_actagraria: 'CAFÉ',
+      num_superficie: '2.5',
+      txt_regtenencia: 'PROPIO',
+      txt_sexo: 'M',
+      txt_departamento: 'CUSCO',
+      txt_provincia: 'LA CONVENCIÓN',
+      txt_distrito: 'SANTA ANA',
+      additional_data: 'preserved'
+    }));
+  });
+
+  it('returns null for values that are not producer records', () => {
+    expect(normalizeMidagriProductor(null)).toBeNull();
+    expect(normalizeMidagriProductor('PPA-00123')).toBeNull();
   });
 });
 

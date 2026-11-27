@@ -7,7 +7,7 @@ export const environment = {
   // Para EMULADOR usa: http://10.0.2.2:3000/api
   // Para DISPOSITIVO FÍSICO (celular) usa la IP de tu computadora en la red WiFi.
   //apiUrl: 'http://localhost:8080',
-  apiUrl: 'http://192.168.26.16:8080',
+  apiUrl: 'https://sisqa.devida.gob.pe/geodais-movile',
   //apiUrl: 'https://sistemas.devida.gob.pe/geodaismovil',
   firebase: {
       apiKey: "AIzaSyBxuC9v9dbaQyR2jS9NkBeKeOo86EsGhvY",

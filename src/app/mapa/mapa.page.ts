@@ -753,7 +753,7 @@ export class MapaPage implements OnDestroy {
       return;
     }
 
-    this.gpsLoadingMessage = 'Obteniendo lectura GPS con precisión H/V (hasta 8 s)...';
+    this.gpsLoadingMessage = 'Obteniendo lectura GPS con precisión H/V (hasta 5 s)...';
     this.isLoading = true;
     let position: Position;
     try {

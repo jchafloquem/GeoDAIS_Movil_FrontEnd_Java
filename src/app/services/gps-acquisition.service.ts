@@ -24,7 +24,7 @@ export class GpsAcquisitionService {
   private readonly zone = inject(NgZone);
   private readonly toastController = inject(ToastController);
   private readonly geolocation = inject(GPS_GEOLOCATION);
-  private readonly captureDurationMs = 8000;
+  private readonly captureDurationMs = 5000;
   private readonly reusablePositionMaxAgeMs = 1500;
   private watchId: string | null = null;
   private latestPosition: Position | null = null;

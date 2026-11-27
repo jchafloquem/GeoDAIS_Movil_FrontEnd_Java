@@ -46,6 +46,40 @@ export function toBackendJson(payload: Record<string, unknown>): Record<string, 
   return backendPayload;
 }
 
+export function normalizeMidagriProductor(value: unknown): MidagriProductor | null {
+  if (!isObject(value)) return null;
+
+  const normalizedKeys = new Map(
+    Object.entries(value).map(([key, fieldValue]) => [key.toLowerCase().replace(/[^a-z0-9]/g, ''), fieldValue])
+  );
+  const readStringField = (aliases: string[]): string | undefined => {
+    for (const alias of aliases) {
+      const fieldValue = normalizedKeys.get(alias);
+      if (typeof fieldValue === 'string' && fieldValue.trim()) return fieldValue;
+      if (typeof fieldValue === 'number' && Number.isFinite(fieldValue)) return String(fieldValue);
+    }
+    return undefined;
+  };
+  const code = readStringField([
+    'txtcodigoppa',
+    'codigoppa',
+    'txtcodigoautogenerado',
+    'codigoautogenerado'
+  ])?.trim();
+  return {
+    ...value,
+    txt_codigoautogenerado: code,
+    fec_registro: readStringField(['fecregistro']),
+    txt_actagraria: readStringField(['txtactagraria']),
+    num_superficie: readStringField(['numsuperficie']),
+    txt_regtenencia: readStringField(['txtregtenencia']),
+    txt_sexo: readStringField(['txtsexo']),
+    txt_departamento: readStringField(['txtdepartamento']),
+    txt_provincia: readStringField(['txtprovincia']),
+    txt_distrito: readStringField(['txtdistrito'])
+  };
+}
+
 export function assertBackendPhotoReferences(payload: Record<string, unknown>): void {
   const photoFields = [
     'ruta_dni_anverso', 'ruta_dni_reverso',
@@ -181,7 +215,7 @@ export class ApiService {
   async getMidagriData(dni: string): Promise<MidagriProductor | null> {
     console.log(`[ApiService] Iniciando getMidagriData para DNI: ${dni}`);
     try {
-      const url = `https://gateway.midagri.gob.pe/sisppa/api/services/app/Consulta/GetDatosProductor?codDocumento=1&Documento=${dni}`;
+      const url = `https://gateway.midagri.gob.pe/sisppa_api/api/services/app/Consulta/GetDatosProductor?codDocumento=1&Documento=${dni}`;
       console.log(`[ApiService] Consultando URL MIDAGRI: ${url}`);
 
       const response: HttpResponse = await CapacitorHttp.get({ url });
@@ -190,13 +224,14 @@ export class ApiService {
       console.log(`[ApiService] Respuesta de MIDAGRI recibida. Status: ${response.status}`);
       console.log('[ApiService] Datos de MIDAGRI:', JSON.stringify(midagriData));
 
-      if (response.status === 200 && midagriData && midagriData.success && midagriData.result) {
-        if (Array.isArray(midagriData.result) && midagriData.result.length > 0) {
-          console.log('[ApiService] MIDAGRI: Éxito, se encontró un array de resultados. Usando el primero.');
-          return midagriData.result[0]; // Si es un array, toma el primer elemento
-        } else if (!Array.isArray(midagriData.result) && typeof midagriData.result === 'object' && midagriData.result !== null) {
-          console.log('[ApiService] MIDAGRI: Éxito, se encontró un objeto de resultado.');
-          return midagriData.result; // Si es un objeto, úsalo directamente
+      if (response.status === 200 && midagriData?.success && midagriData.result) {
+        const results = Array.isArray(midagriData.result) ? midagriData.result : [midagriData.result];
+        const productor = results
+          .map(normalizeMidagriProductor)
+          .find((result): result is MidagriProductor => result !== null);
+        if (productor) {
+          console.log('[ApiService] MIDAGRI: Éxito, se encontró un resultado de productor.');
+          return productor;
         }
       }
       console.warn('[ApiService] MIDAGRI: Respuesta no exitosa o sin resultados válidos.');
